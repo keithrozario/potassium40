@@ -41,7 +41,7 @@ functions:
     description: Bruteforce Bcrypts using Lambdas
   gloda_get_robots:
     handler: lambda_multiproc.get_robots
-    memorySize: 576
+    memorySize: 1024
     timeout: 300
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
   gloda_compress_bucket:
