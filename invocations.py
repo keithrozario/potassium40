@@ -11,6 +11,7 @@ import base64
 configuration_file = 'lambda/serverless.yml'
 status_file = 'lambda/deploy/status.json'
 result_folder = 'result'
+default_region = 'us-east-1'
 
 
 def get_regions():
@@ -18,11 +19,10 @@ def get_regions():
     with open(configuration_file, 'r') as serverless:
         sls_config = yaml.load(serverless.read())
 
-    deploy_regions = sls_config.get('custom', dict()).get('deployed_regions', ['ap-southeast-1'])
-    primary_region = sls_config.get('custom', dict()).get('primary_region', 'ap-southeast-1')
+    region = sls_config.get('provider', dict()).get('region', default_region)
 
-    return {'deploy_regions': deploy_regions,
-            'primary_region': primary_region}
+    return {'region': region}
+
 
 
 def get_config():
@@ -45,7 +45,7 @@ def invoke_lambda(function_name, region_name, payload, invocation_type, log_type
 def get_log_events(log_group_name, filter_pattern, start_time, return_messages=False, region_name=False):
 
     if not region_name:
-        region_name = get_regions()['primary_region']
+        region_name = get_regions()['region']
 
     log_client = boto3.client('logs', region_name=region_name)
     response = log_client.filter_log_events(logGroupName=log_group_name,
@@ -70,7 +70,7 @@ def get_log_events(log_group_name, filter_pattern, start_time, return_messages=F
         return num_events
 
 
-def check_lambdas(function_name, num_invocations, start_time, region_name=False):
+def check_lambdas(function_name, num_invocations, start_time, region_name=False, sleep_time=3):
 
     log_group_name = '/aws/lambda/{}'.format(function_name)
     print("Checking Lambdas in {}".format(region_name))
@@ -78,7 +78,7 @@ def check_lambdas(function_name, num_invocations, start_time, region_name=False)
     num_lambdas_ended = 0
 
     while True:
-        time.sleep(3)
+        time.sleep(sleep_time)
         if num_lambdas_ended == num_invocations:
             break
         else:
@@ -104,7 +104,7 @@ def check_lambdas(function_name, num_invocations, start_time, region_name=False)
 
 def clear_bucket():
 
-    s3_client = boto3.client('s3', region_name=get_regions()['primary_region'])
+    s3_client = boto3.client('s3', region_name=get_regions()['region'])
     config = get_config()
 
     kwargs = {'Bucket': config['bucket_name']}
@@ -133,7 +133,7 @@ def clear_bucket():
 
 def check_bucket():
 
-    s3_client = boto3.client('s3', region_name=get_regions()['primary_region'])
+    s3_client = boto3.client('s3', region_name=get_regions()['region'])
     config = get_config()
 
     try:
@@ -145,7 +145,7 @@ def check_bucket():
         return False
 
     print("Found %d items in S3...ending" % len(keys))
-    s3 = boto3.resource('s3', region_name=get_regions()['primary_region'])
+    s3 = boto3.resource('s3', region_name=get_regions()['region'])
     print("Downloading all files from bucket")
 
     # delete all items in the result folder on local machine, and download bucket
@@ -199,11 +199,11 @@ def consolidate_result():
             output_file.write(line)
 
 
-def async_in_region(function_name, payloads, region_name=False, max_workers=1):
+def async_in_region(function_name, payloads, region_name=False, max_workers=1, sleep_time=3):
 
-    # if no region specified use primary_region
+    # if no region specified use region
     if not region_name:
-        region_name = get_regions()['primary_region']
+        region_name = get_regions()['region']
 
     lambda_client = boto3.client('lambda', region_name=region_name)
     print("Invoking Lambdas in {}".format(region_name))
@@ -222,46 +222,18 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1):
     check_lambdas(function_name=function_name,
                   num_invocations=len(payloads),
                   start_time=start_time,
-                  region_name=region_name)
+                  region_name=region_name,
+                  sleep_time=sleep_time)
 
     return response.result()
 
 
-def sync_per_region(function_name, payload, max_regions=False, max_workers=1, log_type='None'):
-    results = []
-    deploy_regions = get_regions()['deploy_regions']
-
-    # if max_region was specified, query for all regions
-    if not max_regions:
-        max_regions = len(deploy_regions)
-    print("Processing payload in {} regions".format(max_regions))
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(invoke_lambda,
-                                   function_name=function_name,
-                                   invocation_type="RequestResponse",
-                                   payload=json.dumps(payload),
-                                   log_type=log_type,
-                                   region_name=region) for region in deploy_regions[:max_regions]]
-
-        for future in concurrent.futures.as_completed(futures):
-            resp_payload = future.result()['Payload'].read().decode('utf-8')
-
-            if log_type == 'None':
-                results.append(resp_payload)
-            else:
-                log_result = base64.b64decode(future.result()['LogResult'])
-                results.append({'resp_payload': resp_payload,
-                                'log_result': log_result})
-
-    return results
-
 
 def sync_in_region(function_name, payloads, region_name=False, max_workers=1, log_type='None'):
 
-    # if no region specified use primary_region
+    # if no region specified use region
     if not region_name:
-        region_name = get_regions()['primary_region']
+        region_name = get_regions()['region']
 
     lambda_client = boto3.client('lambda', region_name=region_name)
     print("Invoking Lambdas in {}".format(region_name))
@@ -283,37 +255,5 @@ def sync_in_region(function_name, payloads, region_name=False, max_workers=1, lo
                 log_result = base64.b64decode(future.result()['LogResult'])
                 results.append({'resp_payload': resp_payload,
                                 'log_result': log_result})
-
-    return results
-
-
-def async_per_region(function_name, payload, max_regions=False, max_workers=1):
-
-    """
-    This function is un-tested use at your peril
-    """
-    results = []
-    deploy_regions = get_regions()['deploy_regions']
-
-    # if max_region was specified, query for all regions
-    if not max_regions:
-        max_regions = len(deploy_regions)
-    print("Processing payload in {} regions".format(max_regions))
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(invoke_lambda,
-                                   function_name=function_name,
-                                   invocation_type="Event",
-                                   payload=json.dumps(payload),
-                                   region_name=region) for region in deploy_regions[:max_regions]]
-
-        for future in concurrent.futures.as_completed(futures):
-            if future.result()['StatusCode'] == 202:
-                results.append('invoked')
-
-    if len(results) == len(deploy_regions[:max_regions]):
-        print('All Lambdas Invoked')
-    else:
-        print('There was en error invoking the lambdas')
 
     return results

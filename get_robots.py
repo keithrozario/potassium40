@@ -10,10 +10,10 @@ if __name__ == '__main__':
     invocations.clear_bucket()
 
     payloads = []
-    start_pos = 100000
-    end_pos   = 150000
-    per_lambda = 1000
-    proc_count = 100
+    start_pos = 0
+    end_pos = 500000
+    per_lambda = 1250
+    proc_count = 125
 
     num_invocations = (end_pos - start_pos) / per_lambda
 
@@ -23,16 +23,19 @@ if __name__ == '__main__':
                          'proc_count': proc_count})  # proc_count is the number of Threads per lambda
 
     _start = time.time()
-    results = invocations.async_in_region(function_name='gloda_get_robots',
-                                          payloads=payloads)
+    results = invocations.async_in_region(function_name='pottasium40_get_robots',
+                                          payloads=payloads,
+                                          max_workers=4,
+                                          sleep_time=5)
 
     _end = time.time()
     print("Time Taken to process {:,} urls is {}s".format(end_pos-start_pos,
                                                           time.time() - _start))
 
-    results = invocations.async_in_region(function_name='gloda_compress_bucket',
+    results = invocations.async_in_region(function_name='pottasium40_compress_bucket',
                                           payloads=[{}],  # no arguments needed
-                                          max_workers=1)
+                                          max_workers=1,
+                                          sleep_time=5)
 
     print("Time Taken to compress {:,} urls is {}s".format(end_pos-start_pos,
                                                            time.time() - _start))

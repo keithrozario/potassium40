@@ -34,17 +34,12 @@ provider:
   logRetentionInDays: 1
 
 functions:
-  gloda_check_bcrypt:
-    handler: lambda_bcrypt.check_hash
-    memorySize: 1664
-    timeout: 60
-    description: Bruteforce Bcrypts using Lambdas
-  gloda_get_robots:
+  pottasium40_get_robots:
     handler: lambda_multiproc.get_robots
     memorySize: 1024
     timeout: 300
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
-  gloda_compress_bucket:
+  pottasium40_compress_bucket:
     handler: compress_bucket.compress_bucket
     memorySize: 3008
     timeout: 900
