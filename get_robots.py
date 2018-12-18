@@ -10,8 +10,8 @@ if __name__ == '__main__':
     invocations.clear_bucket()
 
     payloads = []
-    start_pos = 300000
-    end_pos = 400000
+    start_pos = 100000
+    end_pos   = 150000
     per_lambda = 1000
     proc_count = 100
 
@@ -24,12 +24,11 @@ if __name__ == '__main__':
 
     _start = time.time()
     results = invocations.async_in_region(function_name='gloda_get_robots',
-                                          payloads=payloads,
-                                          max_workers=8)
+                                          payloads=payloads)
 
     _end = time.time()
     print("Time Taken to process {:,} urls is {}s".format(end_pos-start_pos,
-                                                             _end - _start))
+                                                          time.time() - _start))
 
     results = invocations.async_in_region(function_name='gloda_compress_bucket',
                                           payloads=[{}],  # no arguments needed
