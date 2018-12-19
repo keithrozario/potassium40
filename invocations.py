@@ -227,7 +227,7 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
                                        InvocationType='Event',
                                        Payload=json.dumps(payload))
 
-    print("INFO: Lambdas invoked, checking status\n")
+    print("INFO: {} Lambdas invoked, checking status\n".format(len(payloads)))
     check_lambdas(function_name=function_name,
                   num_invocations=len(payloads),
                   start_time=start_time,

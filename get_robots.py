@@ -32,7 +32,7 @@ if __name__ == '__main__':
     _start = time.time()
     results = invocations.async_in_region(function_name='pottasium40_get_robots',
                                           payloads=payloads,
-                                          max_workers=4,
+                                          max_workers=2,
                                           sleep_time=5)
 
     _end = time.time()
