@@ -37,18 +37,28 @@ def clear_bucket():
     s3_client = boto3.client('s3', region_name=get_regions()['region'])
     config = get_config()
 
-    # Get keys in the bucket
-    response = s3_client.list_objects_v2(Bucket=config['bucket_name'])
-    # Delete each key
-    try:
-        for content in response['Contents']:
-            response = s3_client.delete_object(Bucket=config['bucket_name'],
-                                               Key=content['Key'])
-        print("Result bucket is not empty, deleting all files")
-    except KeyError:
-        pass
+    kwargs = {'Bucket': config['bucket_name']}
 
-    return None
+    while True:
+        resp = s3_client.list_objects_v2(**kwargs)
+        keys = []
+
+        for obj in resp.get('Contents', []):
+            keys.append({'Key': obj['Key']})
+
+        if len(keys) > 0:
+            s3_client.delete_objects(Bucket=config['bucket_name'],
+                                     Delete={'Objects': keys})
+        else:
+            print("Bucket is empty.")
+
+        # try the next iteration, (list_objects_v2 only returns first 1000 entries)
+        try:
+            kwargs['ContinuationToken'] = resp['NextContinuationToken']
+        except KeyError:
+            break
+
+    return keys
 
 
 if __name__ == '__main__':
