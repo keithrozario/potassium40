@@ -28,26 +28,11 @@ provider:
   name: aws
   runtime: python3.6
   stage: prod
-  region: ap-southeast-1
+  region: us-east-1
   memorySize: 128
   timeout: 120
   logRetentionInDays: 1
 
-layers:
-  common_data:
-    path: layers/common_data.zip
-    name: potassium40-common-data
-    description: Common data files for all functions
-    compatibleRuntimes:
-      - python3.6
-    licenseinfo: MIT
-  requests_layer:
-    path: layers/requests_layer.zip
-    name: potassium40-requests
-    description: requests package
-    compatibleRunTimes:
-      - python 3.6
-    licenseinfo: Apache-2.0
 
 functions:
   pottasium40_get_robots:
