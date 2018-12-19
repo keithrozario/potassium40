@@ -4,18 +4,25 @@ import time
 import invocations
 import json
 import boto3
+import argparse
 
 if __name__ == '__main__':
 
     invocations.clear_bucket()
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--num_invocations",
+                        help="Number of lambdas to invoke, each lambda will process 1250 urls, \
+                        set to 800 to process all 1 million",
+                        default=100)
+
+    args = parser.parse_args()
+
     payloads = []
-    start_pos = 0
-    end_pos  = 12500
     per_lambda = 1250
     proc_count = 125
-
-    num_invocations = (end_pos - start_pos) / per_lambda
+    num_invocations = args.num_invocations
+    total_urls = num_invocations * per_lambda
 
     for x in range(int(num_invocations)):
         payloads.append({'start_pos': x * per_lambda,
@@ -29,7 +36,7 @@ if __name__ == '__main__':
                                           sleep_time=5)
 
     _end = time.time()
-    print("Time Taken to process {:,} urls is {}s".format(end_pos-start_pos,
+    print("Time Taken to process {:,} urls is {}s".format(total_urls,
                                                           time.time() - _start))
 
     results = invocations.async_in_region(function_name='pottasium40_compress_bucket',
@@ -37,7 +44,7 @@ if __name__ == '__main__':
                                           max_workers=1,
                                           sleep_time=5)
 
-    print("Time Taken to compress {:,} urls is {}s".format(end_pos-start_pos,
+    print("Time Taken to compress {:,} urls is {}s".format(total_urls,
                                                            time.time() - _start))
 
     # download file from S3 bucket
