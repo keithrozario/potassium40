@@ -79,7 +79,8 @@ def check_lambdas(function_name, num_invocations, start_time, region_name=False,
 
     while True:
         time.sleep(sleep_time)
-        if num_lambdas_ended == num_invocations:
+        if num_lambdas_ended >= num_invocations:
+            print('All lambdas ended!')
             break
         else:
             num_lambdas_ended = get_log_events(log_group_name=log_group_name,
