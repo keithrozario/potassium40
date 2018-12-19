@@ -209,6 +209,12 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
 
     lambda_client = boto3.client('lambda', region_name=region_name)
 
+    print("{} functions to be invoked, reserving concurrency".format(len(payloads)))
+    response = lambda_client.put_function_concurrency(FunctionName=function_name,
+                                                      ReservedConcurrentExecutions=len(payloads)+50)
+    print("{} now has {} reserved concurrent executions".format(function_name,
+                                                                response['ReservedConcurrentExecutions']))
+
     print("Invoking Lambdas in {}".format(region_name))
     start_time = int(datetime.datetime.now().timestamp() * 1000)  # Epoch Time
 
@@ -227,6 +233,12 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
                   start_time=start_time,
                   region_name=region_name,
                   sleep_time=sleep_time)
+
+    try:
+        lambda_client.delete_function_concurrency(FunctionName=function_name)
+        print("Reserved Concurrency for {} removed".format(function_name))
+    except ClientError:
+        pass  # no concurrency set
 
     return response.result()
 
