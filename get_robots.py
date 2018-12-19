@@ -42,7 +42,7 @@ if __name__ == '__main__':
     results = invocations.async_in_region(function_name='pottasium40_compress_bucket',
                                           payloads=[{}],  # no arguments needed
                                           max_workers=1,
-                                          sleep_time=5)
+                                          sleep_time=20)
 
     print("Time Taken to compress {:,} urls is {}s".format(total_urls,
                                                            time.time() - _start))
