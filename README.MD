@@ -63,3 +63,21 @@ All components aboved are deleted during uninstallation. All objects in the buck
 This tool is still in beta mode. Use at your peril. But look at these results:
 
 ![Screenshot](screenshots/prompt_results.png)
+
+# Architecture
+
+I intend to write in more detail about the architecture, but for now here's a quick n' dirty diagram
+
+![Screenshot](screenshots/architecture.png)
+
+# Results
+
+If you just want the robots.txt files, [here's the latest scan I did](https://www.dropbox.com/s/u06emca53n38dm9/robots.json.gz?dl=0)
+
+# To do
+
+I'll have to clean up this repo. It's too messy :)
+
+# Contact
+
+keith@keithrozario.com
