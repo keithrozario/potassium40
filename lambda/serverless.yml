@@ -28,7 +28,7 @@ provider:
   name: aws
   runtime: python3.6
   stage: prod
-  region: us-east-1
+  region: ap-southeast-1
   memorySize: 128
   timeout: 120
   logRetentionInDays: 1

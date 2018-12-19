@@ -20,7 +20,7 @@ It's a http scanner, that can scan websites for specific content, create a http 
     $ cd potassium40
     $ ./install.sh
 
-For information of what is deployed during the install, refer to components below. 
+For information of what is deployed during the install, refer to components below. By default all installations are done in `ap-southeast-1` but you can change this by modifying the `lambda/serverless.yml` file. The file format is identical to format of the serverless framework, but the framework is not required for deployment. 
 
 ## To run :
 
