@@ -18,6 +18,7 @@ var/
 venv/
 result/*
 result.txt
+__pycache__/*
 
 # Serverless directories and related
 .serverless

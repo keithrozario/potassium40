@@ -16,7 +16,8 @@ base_policy_file = 'lambda/deploy/base_lambda_policy.json'
 layer_directory = 'lambda/layers/'
 common_data_layer_file_name = 'common_data.zip'
 common_data_lambda_layer_name = 'common_data'
-package_zip_file = 'lambda/package/GlobaLambdas.zip'
+package_zip_file = 'lambda/package/potassium40_package.zip'
+package_zip_file = 'lambda/package/potassium40_package.zip'
 serverless_yaml = 'lambda/serverless.yml'
 deploy_log = 'lambda/deploy/deploy.log'
 default_region = 'lambda/us-east-1'
@@ -40,6 +41,11 @@ def update_status_file(update):
 
 
 def update_status_field(update):
+
+    """
+    Receives a dict of type { "key": "value"}
+    creates the dict in the file or appends value to an already existing list of "key" in the status file
+    """
 
     try:
         with open(status_file, 'r') as status_reader:
@@ -200,15 +206,20 @@ def create_bucket(status_file, region):
     except (FileNotFoundError, KeyError):
         # Create new bucket
         logger.info("INFO: Unable to find old configuration, creating new bucket")
-        s3_client = boto3.client('s3')
+        s3_client = boto3.client('s3', region_name=region)
 
         # generate random bucket name
         bucket_name = '{}{}'.format(bucket_prefix, uuid.uuid4())  # use uuid to create random bucket name
         logger.info("INFO: Creating bucket named {}".format(bucket_name))
-        response = s3_client.create_bucket(ACL='private',
-                                           Bucket=bucket_name,
-                                           CreateBucketConfiguration={'LocationConstraint': region}
-                                           )
+
+        # unfortunate inconsistency of boto3, means we have treat us-east-1 special
+        if region == 'us-east-1':
+            response = s3_client.create_bucket(ACL='private',
+                                               Bucket=bucket_name)
+        else:
+            response = s3_client.create_bucket(ACL='private',
+                                               Bucket=bucket_name,
+                                               CreateBucketConfiguration={'LocationConstraint': region})
         with open(status_file, 'w') as status:
             status.write(json.dumps({'bucket_name': bucket_name,
                                      'location': response['Location']}))
@@ -292,6 +303,10 @@ def create_lambda(region, role_arn, layer_arns, package):
 
 def publish_layer(region, bucket_name, file_name, layer_name, layer_desc='no description', layer_license='MIT'):
 
+    """
+    Publish a single layer configuration to this region
+    """
+
     lambda_client = boto3.client('lambda', region_name=region)
 
     # check for lambda layer
@@ -322,8 +337,8 @@ def publish_layer(region, bucket_name, file_name, layer_name, layer_desc='no des
 
     if deploy:
 
-        s3 = boto3.resource('s3')
-        s3_client = boto3.client('s3')
+        s3 = boto3.resource('s3', region_name=region)
+        s3_client = boto3.client('s3', region_name=region)
 
         lambda_layer_zip = layer_directory + file_name
         # Upload file to S3 bucket
@@ -408,7 +423,6 @@ if __name__ == '__main__':
                         'layer_codeSha256': response['codeSha256']})
 
     # Deploy Lambdas
-
     create_lambda(region=region,
                   role_arn=role_arn,
                   layer_arns=layer_arns,

@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     payloads = []
     start_pos = 0
-    end_pos = 500000
+    end_pos  = 12500
     per_lambda = 1250
     proc_count = 125
 
