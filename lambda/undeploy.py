@@ -71,12 +71,17 @@ if __name__ == '__main__':
 
     for region in deployed_regions:
         lambda_client = boto3.client('lambda', region_name=region)
+        logs_client = boto3.client('logs', region_name=region)
         logger.info('INFO: Deleting functions functions in %s' % region)
         for lambda_arn in status.get('lambdas', []):
 
             if lambda_arn.split(':')[3] == region:
+                # Delete lambda and associated log group
                 try:
                     lambda_client.delete_function(FunctionName=lambda_arn)
+                    function_name = lambda_arn.split(':')[-1]
+                    logs_client.delete_log_group(logGroupName='/aws/lambda/{}'.format(function_name))
+                    logger.info("Deleted function {} and its logGroup".format(function_name))
                 except ClientError:
                     logger.info("ERROR: Unable to delete function")
 
