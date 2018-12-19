@@ -21,7 +21,7 @@ if __name__ == '__main__':
     payloads = []
     per_lambda = 1250
     proc_count = 125
-    num_invocations = args.num_invocations
+    num_invocations = int(args.num_invocations)
     total_urls = num_invocations * per_lambda
 
     for x in range(int(num_invocations)):
