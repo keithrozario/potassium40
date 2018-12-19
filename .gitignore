@@ -35,4 +35,3 @@ lambda/package/cloud*
 lambda/deploy.log
 test_data/*
 lambda/package.sh
-lambda/layers
