@@ -12,7 +12,6 @@ It's a http scanner, that can scan websites for specific content, create a http 
 
 **NOTE:** Potassium40 runs on Amazon Web Services (AWS), and while for most use-cases it'll fit into the free-tier, you will be charged if you go overboard. A scan of 1 million websites can be run ~10 times before you have to start paying, roughly $0.60 per 1 million websites.
 
-![Screenshot](screenshots/prompt_results.png)
 
 # Running
 
@@ -61,5 +60,6 @@ All components aboved are deleted during uninstallation. All objects in the buck
 
 # Warning
 
-This tool is still in beta mode. Use at your peril.
-   
+This tool is still in beta mode. Use at your peril. But look at these results:
+
+![Screenshot](screenshots/prompt_results.png)
