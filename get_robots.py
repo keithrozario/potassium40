@@ -30,7 +30,7 @@ if __name__ == '__main__':
                          'proc_count': proc_count})  # proc_count is the number of Threads per lambda
 
     _start = time.time()
-    results = invocations.async_in_region(function_name='pottasium40_get_robots',
+    results = invocations.async_in_region(function_name='potassium40_get_robots',
                                           payloads=payloads,
                                           max_workers=4,
                                           sleep_time=5)

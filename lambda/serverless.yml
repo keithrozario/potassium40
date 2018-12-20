@@ -35,12 +35,12 @@ provider:
 
 
 functions:
-  pottasium40_get_robots:
+  potassium40_get_robots:
     handler: lambda_multiproc.get_robots
     memorySize: 1280
     timeout: 180
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
-  pottasium40_compress_bucket:
+  potassium40_compress_bucket:
     handler: compress_bucket.compress_bucket
     memorySize: 3008
     timeout: 900
