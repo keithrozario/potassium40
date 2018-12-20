@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print("Time Taken to process {:,} urls is {}s".format(total_urls,
                                                           time.time() - _start))
 
-    results = invocations.async_in_region(function_name='pottasium40_compress_bucket',
+    results = invocations.async_in_region(function_name='potassium40_compress_bucket',
                                           payloads=[{}],  # no arguments needed
                                           max_workers=1,
                                           sleep_time=20)
