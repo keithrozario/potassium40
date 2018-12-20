@@ -15,7 +15,7 @@ logger = logging.getLogger()
 level = logging.INFO
 logger.setLevel(level)
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-headers = {'User-Agent': 'glodaBot'}
+headers = {'User-Agent': 'p40Bot'}
 
 
 def make_requests(urls, conn):
@@ -106,7 +106,10 @@ def get_robots(event, context):
 
     proc_count = event.get('proc_count', 6)
 
-    logger.info("Requesting {} urls with {} procs".format(len(urls), proc_count))
+    logger.info("Requesting {} urls from {} to {} with {} procs".format(len(urls),
+                                                                        urls[0],
+                                                                        urls[-1],
+                                                                        proc_count))
     results = requests_all(urls, proc_count)
     logger.debug("{}".format(results))
     logger.info("Requests complete, creating result file")
