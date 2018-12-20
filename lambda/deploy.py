@@ -77,8 +77,8 @@ def create_role(bucket_arn, base_policy):
     Policy does **not** allow for creation/deletion/acl modification
     """
 
-    iam_role_name = 'pottasium40_role'
-    iam_policy_name = 'pottasium40_policy'
+    iam_role_name = 'pottassium40_role'
+    iam_policy_name = 'pottassium40_policy'
 
     # Check if role is already created, skip this step if not required
     try:
@@ -189,12 +189,12 @@ def create_role(bucket_arn, base_policy):
 def create_bucket(status_file, region):
 
     """
-    Creates a bucket with the name pottasium40.<xxx> where <xxx> is a uuid version 4
+    Creates a bucket with the name potassium40.<xxx> where <xxx> is a uuid version 4
     we use uuid to guarante unique bucket names across aws name space
     if a bucket name already exists in the status.json file, this bucket is used, no new bucket is created
     """
 
-    bucket_prefix = 'pottasium40.'
+    bucket_prefix = 'potassium40.'
 
     # Check if a bucket name exist in status
     try:

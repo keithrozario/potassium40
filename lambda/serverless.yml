@@ -1,4 +1,4 @@
-service: pottasium40_package
+service: potassium40_package
 
 plugins:
 - serverless-python-requirements
