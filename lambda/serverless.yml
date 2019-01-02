@@ -1,13 +1,26 @@
 service: potassium40_package
 
-plugins:
-- serverless-python-requirements
-
 versionFunctions: false
 
-custom:
-  pythonRequirements:
-    dockerizePip: non-linux
+layers:
+
+  commondata:
+    package:
+      artifact: layers/common_data.zip
+    name: ${self:provider.stage}-common_data
+    description: Contains Cisco Umbrella Top 1 million records (in randomized order)
+    compatibleRuntimes:
+    - python3.7
+    licenseInfo:  MIT #  Defaults to my general license type
+
+  requests:
+    package:
+      artifact: layers/requests.zip
+    name: ${self:provider.stage}-requests
+    description: Contains requests package 2.21.0 and all its dependecies
+    compatibleRuntimes:
+    - python3.7
+    licenseInfo: Apache-2.0 #  I follow the original requests package by Kenneth Reitz
 
 package:
   exclude:
@@ -26,9 +39,9 @@ package:
 
 provider:
   name: aws
-  runtime: python3.6
+  runtime: python3.7
   stage: prod
-  region: ap-southeast-1
+  region: ap-southeast-2
   memorySize: 128
   timeout: 120
   logRetentionInDays: 1
@@ -40,6 +53,9 @@ functions:
     memorySize: 1280
     timeout: 180
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
+    layers:  # current version of deploy.py ignores this and attaches all layers to every lambda
+      - {Ref: RequestsLambdaLayer}  # lambda layers are named with CF format
+      - {Ref: CommondataLambdaLayer}  # lambda layers are named with CF format
   potassium40_compress_bucket:
     handler: compress_bucket.compress_bucket
     memorySize: 3008
