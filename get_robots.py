@@ -47,12 +47,11 @@ if __name__ == '__main__':
     print("Time Taken to compress {:,} urls is {}s".format(total_urls,
                                                            time.time() - _start))
 
-    # download file from S3 bucket
-    # with open ('lambda/deploy/status.json', 'r') as status_file:
-    #     bucket_name = json.loads(status_file.read()).get('bucket_name', False)
-    #
-    # s3 = boto3.resource('s3')
-    # result_file = 'robots.json.gz'
-    # s3.Bucket(bucket_name).download_file(result_file, result_file)
-    #
-    # print("Time Taken to download file is {}s".format(time.time() - _start))
+    with open('status.json', 'r') as status_file:
+        bucket_name = json.loads(status_file.read()).get('bucket_name', False)
+
+    s3 = boto3.resource('s3')
+    result_file = 'robots.json.gz'
+    s3.Bucket(bucket_name).download_file(result_file, result_file)
+
+    print("Time Taken to download file is {}s".format(time.time() - _start))
