@@ -60,12 +60,12 @@ functions:
     timeout: 180
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
     layers:
-      Fn::Join:
-      - ""
-      - - "arn:aws:lambda:"
-        - ${opt:region, self:provider.region}
-        - ":113088814899:layer:Klayers-python37-requests:"
-        - "1"  # version of layer imported
+      - Fn::Join:
+        - ""
+        - - "arn:aws:lambda:"
+          - ${opt:region, self:provider.region}
+          - ":113088814899:layer:Klayers-python37-requests:"
+          - "1"  # version of layer imported
   compress_bucket:
     handler: compress_bucket.compress_bucket
     memorySize: 3008
