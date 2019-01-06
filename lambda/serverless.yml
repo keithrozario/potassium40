@@ -52,7 +52,7 @@ package:
     - node_modules/**
     - package.json
     - package-lock.json
-    - layers
+    - layers/**
 
 layers:
   text:
@@ -67,7 +67,7 @@ functions:
     timeout: 180
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
     layers:
-      - {Ref: textLambdaLayer}
+      - {Ref: TextLambdaLayer}
       - Fn::Join:
         - ""
         - - "arn:aws:lambda:"
