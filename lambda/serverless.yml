@@ -1,62 +1,72 @@
-service: potassium40_package
 
-versionFunctions: false
+service: potassium40
 
-layers:
+custom:
+  bucketName: ${opt:bucket_name, 'p40-uuid'}
 
-  commondata:
-    package:
-      artifact: layers/common_data.zip
-    name: ${self:provider.stage}-common_data
-    description: Contains Cisco Umbrella Top 1 million records (in randomized order)
-    compatibleRuntimes:
-    - python3.7
-    licenseInfo:  MIT #  Defaults to my general license type
-
-  requests:
-    package:
-      artifact: layers/requests.zip
-    name: ${self:provider.stage}-requests
-    description: Contains requests package 2.21.0 and all its dependecies
-    compatibleRuntimes:
-    - python3.7
-    licenseInfo: Apache-2.0 #  I follow the original requests package by Kenneth Reitz
-
-package:
-  exclude:
-    - venv/**
-    - node_modules/**
-    - .gitignore
-    - package.json
-    - package-lock.json
-    - test_data/**
-    - package/**
-    - deploy/**
-    - deploy.py
-    - undeploy.py
-    - package.sh
-    - layers/**
+resources:
+  Resources:
+    p40Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
 
 provider:
   name: aws
   runtime: python3.7
-  stage: prod
-  region: ap-southeast-2
-  memorySize: 128
-  timeout: 120
-  logRetentionInDays: 1
+  logRetentionDays: 1
+  stage: functions
+  region: ap-southeast-1
+  iamRoleStatements:
+  # Bucket Permissions
+  - Effect: Allow
+    Action:
+    - s3:ListBucket
+    Resource:
+      Fn::Join:
+        - ""
+        - - "arn:aws:s3:::"
+          - ${self:custom.bucketName}
+  # Bucket **Objects** Permissions
+  - Effect: Allow
+    Action:
+    - s3:PutObject
+    - s3:GetObject
+    - s3:DeleteObject
+    - s3:PutObjectAcl
+    - s3:GetObjectAcl  # ACL permissions required for file_upload
+    - s3:AbortMultipartUpload
+    Resource:
+      Fn::Join:
+        - ""
+        - - "arn:aws:s3:::"
+          - ${self:custom.bucketName}
+          - "/*"
+  environment:
+    bucket_name: ${self:custom.bucketName}
 
+package:
+  exclude:
+    - venv/**
+    - .gitignore
+    - node_modules/**
+    - package.json
+    - package-lock.json
 
 functions:
-  potassium40_get_robots:
+  get_robots:
     handler: lambda_multiproc.get_robots
     memorySize: 1280
     timeout: 180
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
-    layers:  # current version of deploy.py ignores this and attaches all layers to every lambda
-      - {Ref: RequestsLambdaLayer}  # lambda layers are named with CF format
-      - {Ref: CommondataLambdaLayer}  # lambda layers are named with CF format
-  potassium40_compress_bucket:
+    layers:
+      Fn::Join:
+      - ""
+      - - "arn:aws:lambda:"
+        - ${opt:region, self:provider.region}
+        - ":113088814899:layer:Klayers-python37-requests:"
+        - "1"  # version of layer imported
+  compress_bucket:
     handler: compress_bucket.compress_bucket
     memorySize: 3008
     timeout: 900
