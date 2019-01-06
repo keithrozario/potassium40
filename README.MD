@@ -19,9 +19,10 @@ It's a http scanner, that can scan websites for specific content, create a http 
 
     $ git clone https://github.com/keithrozario/potassium40.git
     $ cd potassium40
+    $ chmod +x install.sh
     $ ./install.sh
 
-For information of what is deployed during the install, refer to components below. By default all installations are done in `ap-southeast-1` but you can change this by modifying the `lambda/serverless.yml` file. The file format is identical to format of the serverless framework, but the framework is not required for deployment. 
+For information of what is deployed during the install, refer to components below. By default all installations are done in `ap-southeast-1` but you can change this. The script uses the serverless framework to deploy, you will need this as well.
 
 ## To run :
 
@@ -36,27 +37,18 @@ the `n` command line argument is the number of lambda invocations. Each lambda w
 ## To uninstall:
 
     $ ./uninstall.sh
- 
-Uninstall will delete all lambda functions, lambda layers, Cloudwatch logGroups for the lambdas, and the s3 bucket. Your AWS account will effectively be wiped clean of everything deployed during the install.
-    
-**Notes**: 
-* The installation script will install a python3 virtualenv in the `venv/` directory. You'll need to activate this directory in order to run the scan. When you run the installation script, the environment will be activated for you.
-* It is recommended that you already have installed AWS-CLI, but not necessary. As long as the `~/.aws/credentials` file is populated the script will work.
- 
+  
+NOTE: an s3 bucket is created on install with the name p40.<uuid> , please delete all files in the bucket before uninstalling.
 
 # Components
 
 In order to run a proper scan, pottasium40 deploys the following components into your AWS account
 
 * 2 Lambda functions
-    * pottasium40_get_robots : Performs the scan and outputs data to an S3 bucket
-    * pottasium40_compress_bucket : Compresses all files in the S3 bucket into a single file (gzip)
-* 1 S3 Bucket with a randomly generated named, prefixed with pottasium40-
-* An IAM Role and IAM policy that allows the lambdas to access the bucket a CloudWatch LogGroups
-
-These components are all deployed during installation. All details of the installation are stored in the `lambda/deploy/status.json` file.
-
-All components aboved are deleted during uninstallation. All objects in the bucket, and even CloudWatch logGroups are deleted. 
+    * potassium40-functions-get_robots : Performs the scan and outputs data to an S3 bucket
+    * potassium40-functions-compress_bucket : Compresses all files in the S3 bucket into a single file (gzip)
+* 1 S3 Bucket with a randomly generated named, prefixed with p40-<uuid>
+* An IAM Role and IAM policy that allows the lambdas to access the bucket a CloudWatch LogGroups 
 
 # Warning
 
