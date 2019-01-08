@@ -10,7 +10,7 @@ import base64
 from botocore.exceptions import ClientError
 
 configuration_file = 'lambda/serverless.yml'
-status_file = 'status.json'
+status_file = 'lambda/status.json'
 result_folder = 'result'
 default_region = 'us-east-1'
 

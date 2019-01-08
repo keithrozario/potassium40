@@ -3,6 +3,4 @@
 cd lambda
 sls remove
 cd ..
-rm status.json
-
-
+rm lambda/status.json

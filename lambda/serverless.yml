@@ -2,7 +2,7 @@
 service: potassium40
 
 custom:
-  bucketName: ${opt:bucket_name, 'p40-uuid'}
+  bucketName: ${opt:bucket_name, file(./status.json):bucket_name}
 
 resources:
   Resources:
@@ -77,5 +77,5 @@ functions:
   compress_bucket:
     handler: compress_bucket.compress_bucket
     memorySize: 3008
-    timeout: 900
+    timeout: 600
     description: Compress all files in S3 bucket into 1 single zip file
