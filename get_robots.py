@@ -30,7 +30,7 @@ if __name__ == '__main__':
                          'proc_count': proc_count})  # proc_count is the number of Threads per lambda
 
     _start = time.time()
-    results = invocations.async_in_region(function_name='potassium40_get_robots',
+    results = invocations.async_in_region(function_name='potassium40-functions-get_robots',
                                           payloads=payloads,
                                           max_workers=4,
                                           sleep_time=5)
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print("Time Taken to process {:,} urls is {}s".format(total_urls,
                                                           time.time() - _start))
 
-    results = invocations.async_in_region(function_name='potassium40_compress_bucket',
+    results = invocations.async_in_region(function_name='potassium40-functions-compress_bucket',
                                           payloads=[{}],  # no arguments needed
                                           max_workers=1,
                                           sleep_time=20)
@@ -47,8 +47,7 @@ if __name__ == '__main__':
     print("Time Taken to compress {:,} urls is {}s".format(total_urls,
                                                            time.time() - _start))
 
-    # download file from S3 bucket
-    with open ('lambda/deploy/status.json', 'r') as status_file:
+    with open('status.json', 'r') as status_file:
         bucket_name = json.loads(status_file.read()).get('bucket_name', False)
 
     s3 = boto3.resource('s3')

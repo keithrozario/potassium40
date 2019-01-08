@@ -15,23 +15,10 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-venv/
-result/*
-result.txt
-__pycache__/*
+venv/*
 
-# Serverless directories and related
+
+# Serverless directories
 .serverless
-lambda/node_modules/
-lambda/package/requirements.txt
-lambda/package/requirements/*
-lambda/package/serverless-state.json
-lambda/package.json
-lambda/package-lock.json
-lambda/venv/*
-lambda/deploy/deploy.log
-lambda/deploy/status.json
-lambda/package/cloud*
-lambda/deploy.log
-test_data/*
-lambda/package.sh
+lambda/status.json
+robots.json.gz

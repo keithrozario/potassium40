@@ -91,17 +91,23 @@ def requests_all(urls, proc_count):
 
 def get_robots(event, context):
 
-    file = '/opt/top-1m-random.csv'
+    file = '/opt/random_top-1m.csv'
     urls = []
 
     logger.debug("Retrieving URLS")
     if event.get('urls', []):
+        logger.debug("Processing {} urls in event ".format(len(urls)))
         urls = ['http://{}/robots.txt'.format(url) for url in event['urls']]
     elif 'end_pos' in event and 'start_pos' in event:
+        logger.debug("Opening {}".format(file))
+
         with open(file, 'r', encoding='utf-8') as url_file:
             urls = ['http://{}/robots.txt'.format(url.split(',')[1].strip())
                     for url in url_file.readlines()[event['start_pos']:event['end_pos']]]
+
+        logger.debug("Processing {} urls from file".format(len(urls)))
     else:
+        logger.debug("Error in arguments")
         exit(1)
 
     proc_count = event.get('proc_count', 6)
@@ -120,28 +126,10 @@ def get_robots(event, context):
     # Upload file
     s3_client = boto3.client('s3')
     file_name = "{}{}".format(urlparse(urls[0]).netloc, '.txt')
+    logger.debug("Uploading to bucket:{}".format(os.environ['bucket_name']))
     s3_client.upload_fileobj(file_obj, os.environ['bucket_name'], file_name)  # bucket name in env var
 
     return {'status': 200,
             'result': file_name}
-
-
-if __name__ == '__main__':
-
-    console = logging.StreamHandler()
-    console.setLevel(level)
-    logger.addHandler(console)
-
-    os.environ['bucket_name'] = 'gloda.3874991458'
-
-    start = 10000
-    increment = 50
-    for x in range(1000):
-        logger.info("Starting processing for {}".format(start + x*increment))
-        payload = {'start_pos': start + x*increment,
-                   'end_pos': start + (x+1)*increment,
-                   'proc_count': 10}
-        results = get_robots(payload, {})
-        logger.info(results)
 
 

@@ -1,47 +1,85 @@
-service: potassium40_package
 
-plugins:
-- serverless-python-requirements
-
-versionFunctions: false
+service: potassium40
 
 custom:
-  pythonRequirements:
-    dockerizePip: non-linux
+  bucketName: ${opt:bucket_name, file(./status.json):bucket_name}
+
+resources:
+  Resources:
+    p40Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+
+provider:
+  name: aws
+  runtime: python3.7
+  logRetentionDays: 1
+  stage: functions
+  region: ${opt:region, 'ap-southeast-1'}
+  iamRoleStatements:
+  # Bucket Permissions
+  - Effect: Allow
+    Action:
+    - s3:ListBucket
+    Resource:
+      Fn::Join:
+        - ""
+        - - "arn:aws:s3:::"
+          - ${self:custom.bucketName}
+  # Bucket **Objects** Permissions
+  - Effect: Allow
+    Action:
+    - s3:PutObject
+    - s3:GetObject
+    - s3:DeleteObject
+    - s3:PutObjectAcl
+    - s3:GetObjectAcl  # ACL permissions required for file_upload
+    - s3:AbortMultipartUpload
+    Resource:
+      Fn::Join:
+        - ""
+        - - "arn:aws:s3:::"
+          - ${self:custom.bucketName}
+          - "/*"
+  environment:
+    bucket_name: ${self:custom.bucketName}
 
 package:
   exclude:
     - venv/**
-    - node_modules/**
     - .gitignore
+    - node_modules/**
     - package.json
     - package-lock.json
-    - test_data/**
-    - package/**
-    - deploy/**
-    - deploy.py
-    - undeploy.py
-    - package.sh
     - layers/**
 
-provider:
-  name: aws
-  runtime: python3.6
-  stage: prod
-  region: ap-southeast-1
-  memorySize: 128
-  timeout: 120
-  logRetentionInDays: 1
+layers:
+  ciscoumbrella:
+    package:
+      artifact: layers/random_top-1m.csv.zip  # Cisco Umbrella top 1 million (randomized)
+  majestic:
+    package:
+      artifact: layers/random_top-1m.csv.zip  # Majestic 1 million (randomized)
+
 
 
 functions:
-  potassium40_get_robots:
+  get_robots:
     handler: lambda_multiproc.get_robots
     memorySize: 1280
     timeout: 180
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
-  potassium40_compress_bucket:
+    layers:
+      - {Ref: CiscoumbrellaLambdaLayer}
+      - Fn::Join:
+        - ""
+        - - "arn:aws:lambda:"
+          - ${opt:region, self:provider.region}
+          - ":113088814899:layer:"
+          - "Klayers-python37-requests:1"  # layer_name:version
+  compress_bucket:
     handler: compress_bucket.compress_bucket
     memorySize: 3008
-    timeout: 900
+    timeout: 600
     description: Compress all files in S3 bucket into 1 single zip file

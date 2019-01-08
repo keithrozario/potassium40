@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-python3 -m venv venv/
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-python lambda/deploy.py
+UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')  #
+BUCKET_NAME=p40.$UUID
+echo '{"bucket_name": "'$BUCKET_NAME'"}' | jq '.' > lambda/status.json
+cd lambda
+sls deploy --bucket_name $BUCKET_NAME
+cd ..

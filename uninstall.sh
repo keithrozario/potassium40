@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 
-source venv/bin/activate
-python lambda/undeploy.py
+cd lambda
+sls remove
+cd ..
+rm lambda/status.json
