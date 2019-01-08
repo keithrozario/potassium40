@@ -91,7 +91,7 @@ def requests_all(urls, proc_count):
 
 def get_robots(event, context):
 
-    file = '/opt/top-1m-random.csv'
+    file = '/opt/random_top-1m.csv'
     urls = []
 
     logger.debug("Retrieving URLS")
@@ -131,26 +131,5 @@ def get_robots(event, context):
 
     return {'status': 200,
             'result': file_name}
-
-
-# Local testing
-
-if __name__ == '__main__':
-
-    console = logging.StreamHandler()
-    console.setLevel(level)
-    logger.addHandler(console)
-
-    os.environ['bucket_name'] = 'gloda.3874991458'
-
-    start = 10000
-    increment = 50
-    for x in range(1000):
-        logger.info("Starting processing for {}".format(start + x*increment))
-        payload = {'start_pos': start + x*increment,
-                   'end_pos': start + (x+1)*increment,
-                   'proc_count': 10}
-        results = get_robots(payload, {})
-        logger.info(results)
 
 

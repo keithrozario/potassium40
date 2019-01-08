@@ -16,7 +16,7 @@ provider:
   runtime: python3.7
   logRetentionDays: 1
   stage: functions
-  region: ap-southeast-1
+  region: ${opt:region, 'ap-southeast-1'}
   iamRoleStatements:
   # Bucket Permissions
   - Effect: Allow
@@ -55,9 +55,13 @@ package:
     - layers/**
 
 layers:
-  text:
+  ciscoumbrella:
     package:
-      artifact: layers/common_data.zip
+      artifact: layers/random_top-1m.csv.zip  # Cisco Umbrella top 1 million (randomized)
+  majestic:
+    package:
+      artifact: layers/random_top-1m.csv.zip  # Majestic 1 million (randomized)
+
 
 
 functions:
@@ -67,13 +71,13 @@ functions:
     timeout: 180
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
     layers:
-      - {Ref: TextLambdaLayer}
+      - {Ref: CiscoumbrellaLambdaLayer}
       - Fn::Join:
         - ""
         - - "arn:aws:lambda:"
           - ${opt:region, self:provider.region}
-          - ":113088814899:layer:Klayers-python37-requests:"
-          - "1"  # version of layer imported
+          - ":113088814899:layer:"
+          - "Klayers-python37-requests:1"  # layer_name:version
   compress_bucket:
     handler: compress_bucket.compress_bucket
     memorySize: 3008

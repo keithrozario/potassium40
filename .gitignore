@@ -20,5 +20,5 @@ venv/*
 
 # Serverless directories
 .serverless
-status.json
+lambda/status.json
 robots.json.gz

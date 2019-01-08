@@ -1,4 +1,3 @@
-import yaml
 import json
 import time
 import boto3
@@ -12,18 +11,13 @@ from botocore.exceptions import ClientError
 configuration_file = 'lambda/serverless.yml'
 status_file = 'lambda/status.json'
 result_folder = 'result'
-default_region = 'us-east-1'
 
 
 def get_regions():
+    with open('lambda/.serverless/serverless-state.json', 'r') as sls_state:
+        state = json.loads(sls_state.read())
 
-    with open(configuration_file, 'r') as serverless:
-        sls_config = yaml.load(serverless.read())
-
-    region = sls_config.get('provider', dict()).get('region', default_region)
-
-    return {'region': region}
-
+    return {'region': state['service']['provider']['region']}
 
 
 def get_config():
