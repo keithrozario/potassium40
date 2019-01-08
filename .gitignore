@@ -15,7 +15,10 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+venv/*
+
 
 # Serverless directories
 .serverless
 status.json
+robots.json.gz
