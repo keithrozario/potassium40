@@ -14,17 +14,10 @@ status_file = 'lambda/status.json'
 result_folder = 'result'
 
 
-def get_regions():
-    with open('lambda/.serverless/serverless-state.json', 'r') as sls_state:
-        state = yaml.load(sls_state.read())
-
-    return {'region': state['custom']['aws_region']}
-
-
 def get_config():
 
-    with open(status_file, 'r') as status_reader:
-        config = json.loads(status_reader.read())
+    with open('lambda/serverless.yml', 'r') as sls_config:
+        config = yaml.load(sls_config.read())
 
     return config
 
@@ -40,8 +33,10 @@ def invoke_lambda(function_name, region_name, payload, invocation_type, log_type
 
 def get_log_events(log_group_name, filter_pattern, start_time, return_messages=False, region_name=False):
 
+    # if no region specified use region
     if not region_name:
-        region_name = get_regions()['region']
+        config = get_config()
+        region_name = config['custom']['aws_region']
 
     log_client = boto3.client('logs', region_name=region_name)
     response = log_client.filter_log_events(logGroupName=log_group_name,
@@ -101,10 +96,14 @@ def check_lambdas(function_name, num_invocations, start_time, region_name=False,
 
 def clear_bucket():
 
-    s3_client = boto3.client('s3', region_name=get_regions()['region'])
     config = get_config()
 
-    kwargs = {'Bucket': config['bucket_name']}
+    bucket_name = config['custom']['bucketName']
+    region = config['custom']['aws_region']
+
+    s3_client = boto3.client('s3', region_name=region)
+
+    kwargs = {'Bucket': bucket_name}
 
     while True:
         resp = s3_client.list_objects_v2(**kwargs)
@@ -114,7 +113,7 @@ def clear_bucket():
             keys.append({'Key': obj['Key']})
 
         if len(keys) > 0:
-            s3_client.delete_objects(Bucket=config['bucket_name'],
+            s3_client.delete_objects(Bucket=bucket_name,
                                      Delete={'Objects': keys})
         else:
             print("Bucket is empty.")
@@ -128,13 +127,22 @@ def clear_bucket():
     return keys
 
 
-def check_bucket():
+def download_bucket():
 
-    s3_client = boto3.client('s3', region_name=get_regions()['region'])
+    """
+    Download all files from a bucket into the result_folder on local machine
+    Script will delete all items in result_folder before downloading
+    :return:
+    """
+
     config = get_config()
+    bucket_name = config['custom']['bucketName']
+    region = config['custom']['aws_region']
+
+    s3_client = boto3.client('s3', region_name=region)
 
     try:
-        response = s3_client.list_objects_v2(Bucket=config['bucket_name'])
+        response = s3_client.list_objects_v2(Bucket=bucket_name)
         keys = [content['Key'] for content in response['Contents']]
         print("Found {} files, waiting ...".format(len(keys)))
     except KeyError:
@@ -142,7 +150,7 @@ def check_bucket():
         return False
 
     print("Found %d items in S3...ending" % len(keys))
-    s3 = boto3.resource('s3', region_name=get_regions()['region'])
+    s3 = boto3.resource('s3', region_name=region)
     print("Downloading all files from bucket")
 
     # delete all items in the result folder on local machine, and download bucket
@@ -151,56 +159,24 @@ def check_bucket():
         s3.Bucket(config['bucket_name']).download_file(key, result_folder + '/{}'.format(key))
 
 
-def gen_payloads(payloads, right_invocations, per_lambda):
-
-    final_payloads = []
-    for count in range(right_invocations):
-        payload = []
-
-        try:
-            for k in range(per_lambda):
-                payload.append(payloads[count*per_lambda + k])
-        except IndexError:
-            pass  # went over the list items
-
-        final_payloads.append(payload)
-
-    return final_payloads
-
-
-def distribute_payloads(payloads, num_invocations):
-    # Get the right number of invocations
-    per_lambda = int(math.ceil(len(payloads) / num_invocations))
-    right_invocations = int(math.ceil(len(payloads) / per_lambda))
-    print("Total payloads are {}".format(len(payloads)))
-    print("Right number of invocations is {}".format(right_invocations))
-    print("Each lambda will process {} payloads".format(per_lambda))
-    print("Except the last lambda, which will process {} payloads\n\n".format(len(payloads) % per_lambda))
-
-    return gen_payloads(payloads, right_invocations, per_lambda)
-
-
-def consolidate_result():
-
-    lines = []
-    result_dir = "result"
-
-    for root, dirs, files in os.walk(result_dir):
-        for filename in files:
-            with open(result_dir + '/' + filename, 'r') as file:
-                for line in file:
-                    lines.append(line)
-
-    with open('result.txt', 'w') as output_file:
-        for line in lines:
-            output_file.write(line)
-
-
 def async_in_region(function_name, payloads, region_name=False, max_workers=1, sleep_time=3):
+
+    """
+    Invokes lambda functions asynchronously in on region
+    Number of functions invoke is equal to number of elements in Payloads list
+
+    :param function_name:  Function Name to Invoke
+    :param payloads: List of payloads (1 per function)
+    :param region_name: AWS_Region to invoke in
+    :param max_workers: Max number of parallel processes to use for invocations
+    :param sleep_time: Time to sleep before polling for lambda status
+    :return:
+    """
 
     # if no region specified use region
     if not region_name:
-        region_name = get_regions()['region']
+        config = get_config()
+        region_name = config['custom']['aws_region']
 
     lambda_client = boto3.client('lambda', region_name=region_name)
 
@@ -238,12 +214,12 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
     return response.result()
 
 
-
 def sync_in_region(function_name, payloads, region_name=False, max_workers=1, log_type='None'):
 
     # if no region specified use region
     if not region_name:
-        region_name = get_regions()['region']
+        config = get_config()
+        region_name = config['custom']['aws_region']
 
     lambda_client = boto3.client('lambda', region_name=region_name)
     print("Invoking Lambdas in {}".format(region_name))
