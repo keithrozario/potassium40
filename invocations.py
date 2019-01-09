@@ -1,4 +1,5 @@
 import json
+import yaml
 import time
 import boto3
 import math
@@ -15,9 +16,9 @@ result_folder = 'result'
 
 def get_regions():
     with open('lambda/.serverless/serverless-state.json', 'r') as sls_state:
-        state = json.loads(sls_state.read())
+        state = yaml.load(sls_state.read())
 
-    return {'region': state['service']['provider']['region']}
+    return {'region': state['custom']['aws_region']}
 
 
 def get_config():
