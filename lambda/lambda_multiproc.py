@@ -1,61 +1,27 @@
 import math
-import requests
 import io
 import json
 import boto3
 import os
+import custom_request
 import logging
-
 from multiprocessing import Process, Pipe
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-
 
 logger = logging.getLogger()
-level = logging.INFO
+level = logging.DEBUG
 logger.setLevel(level)
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-headers = {'User-Agent': 'p40Bot'}
 
 
-def make_requests(urls, conn):
-    logger.debug(urls)
-
-    s = requests.session()
-    s.headers.update(headers)
-    responses = []
-    for url in urls:
-
-        try:
-            response = s.get("http://{}/robots.txt".format(url),
-                             verify=False,
-                             timeout=1.5)
-            if response.status_code == 200 and response.url[-10:] == 'robots.txt':
-                if 'user-agent:' in response.text.lower():
-                    responses.append({'domain': url,
-                                      'robots.txt': response.text})
-                else:
-                    responses.append({'domain': url})
-            else:
-                responses.append({'domain': url})
-        except:
-            responses.append({'domain': url})
-
-    conn.send(responses)
-    logger.debug("Sent: {}: ".format(urls))
-    conn.close()
-
-
-def requests_all(urls, proc_count):
+def multiproc_requests(rows, proc_count):
     logger.info('Spawning {} processes'.format(proc_count))
 
-    per_proc = int(math.ceil(len(urls) / proc_count))
+    per_proc = int(math.ceil(len(rows) / proc_count))
 
     # create a list to keep all processes
     processes = []
 
     # create a list to keep connections
     parent_connections = []
-    child_connections =[]
 
     # create a process per instance
     for count in range(proc_count):
@@ -64,11 +30,11 @@ def requests_all(urls, proc_count):
         parent_connections.append(parent_conn)
 
         # create the process, pass instance and connection
-        sub_list = [x for x in urls[count * per_proc: (count + 1) * per_proc]]
-        process = Process(target=make_requests, args=(sub_list, child_conn,))
+        sub_list = [x for x in rows[count * per_proc: (count + 1) * per_proc]]
+        process = Process(target=custom_request.request, args=(sub_list, child_conn,))
         processes.append(process)
 
-    logger.info("Making HTTP Requests for {} urls".format(len(urls)))
+    logger.info("Making HTTP Requests for {} rows".format(len(rows)))
     # start all processes
     for process in processes:
         process.start()
@@ -86,47 +52,42 @@ def requests_all(urls, proc_count):
     return responses
 
 
-def get_robots(event, context):
+def init_requests(event):
 
-    file = '/opt/random_top-1m.csv'
-    urls = []
+    logger.info("Starting...")
+    # File is either provided in event['file_name'] or defaults to random_top-1m.csv
+    file = "/opt/{}".format(event.get('file_name', 'random_top-1m.csv'))
+    logger.debug("Retrieving rows from {}".format(file))
 
-    logger.debug("Retrieving URLS")
-    if event.get('urls', []):
-        logger.debug("Processing {} urls in event ".format(len(urls)))
-        urls = ['{}'.format(url) for url in event['urls']]
-    elif 'end_pos' in event and 'start_pos' in event:
+    rows = []
+    if 'end_pos' in event and 'start_pos' in event:
         logger.debug("Opening {}".format(file))
 
-        with open(file, 'r', encoding='utf-8') as url_file:
-            urls = ['{}'.format(url.split(',')[1].strip())
-                    for url in url_file.readlines()[event['start_pos']:event['end_pos']]]
+        with open(file, 'r', encoding='utf-8') as f:
+            rows = f.readlines()[event['start_pos']:event['end_pos']]
 
-        logger.debug("Processing {} urls from file".format(len(urls)))
+        logger.debug("Processing {} rows from file".format(len(rows)))
     else:
-        logger.debug("Error in arguments")
+        logger.error("Error in arguments, start_pos and end_pos not found!!")
         exit(1)
 
-    proc_count = event.get('proc_count', 6)
-
-    logger.info("Requesting {} urls from {} to {} with {} procs".format(len(urls),
-                                                                        urls[0],
-                                                                        urls[-1],
+    proc_count = event.get('proc_count', 125)
+    logger.info("Requesting {} rows from {} to {} with {} procs".format(len(rows),
+                                                                        rows[0],
+                                                                        rows[-1],
                                                                         proc_count))
-    results = requests_all(urls, proc_count)
+    results = multiproc_requests(rows, proc_count)
     logger.debug("{}".format(results))
     logger.info("Requests complete, creating result file")
 
     # create file_obj in memory, must be in Binary form and implement read()
     file_obj = io.BytesIO(json.dumps(results).encode('utf-8'))
 
-    # Upload file
+    # Upload file to bucket
     s3_client = boto3.client('s3')
-    file_name = "{}{}".format(urls[0], '.txt')
+    file_name = "{}-{}.{}".format(event['start_pos'], event['end_pos'], 'txt')
     logger.debug("Uploading to bucket:{}".format(os.environ['bucket_name']))
     s3_client.upload_fileobj(file_obj, os.environ['bucket_name'], file_name)  # bucket name in env var
 
     return {'status': 200,
             'result': file_name}
-
-
