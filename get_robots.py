@@ -2,7 +2,6 @@
 
 import time
 import invocations
-import json
 import boto3
 import argparse
 
@@ -12,46 +11,54 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--num_invocations",
-                        help="Number of lambdas to invoke, each lambda will process 1250 urls, \
-                        set to 800 to process all 1 million",
+                        help="Number of lambdas to invoke, default is 100",
                         default=100)
+    parser.add_argument("-p", "--per_lambda",
+                        help="Number of records to process per lambda, default is 1000",
+                        default=1000)
+    parser.add_argument("-m", "--multiproc_count",
+                        help="Number of multi-processes per lambda, default is 125",
+                        default=1000)
 
     args = parser.parse_args()
 
-    payloads = []
-    per_lambda = 1250
-    proc_count = 125
     num_invocations = int(args.num_invocations)
+    per_lambda = int(args.per_lambda)
+    proc_count = int(args.multiproc_count)
     total_urls = num_invocations * per_lambda
+
+    payloads = []
 
     for x in range(int(num_invocations)):
         payloads.append({'start_pos': x * per_lambda,
                          'end_pos': (x+1) * per_lambda,
-                         'proc_count': proc_count})  # proc_count is the number of Threads per lambda
+                         'proc_count': proc_count})  # proc_count is the number of processes per lambda
 
     _start = time.time()
-    results = invocations.async_in_region(function_name='potassium40-functions-get_robots',
-                                          payloads=payloads,
-                                          max_workers=4,
-                                          sleep_time=5)
+    invocations.async_in_region(function_name='potassium40-functions-get_robots',
+                                payloads=payloads,
+                                max_workers=4,
+                                sleep_time=5)
 
     _end = time.time()
     print("Time Taken to process {:,} urls is {}s".format(total_urls,
                                                           time.time() - _start))
 
-    results = invocations.async_in_region(function_name='potassium40-functions-compress_bucket',
-                                          payloads=[{}],  # no arguments needed
-                                          max_workers=1,
-                                          sleep_time=20)
+    invocations.async_in_region(function_name='potassium40-functions-compress_bucket',
+                                payloads=[{}],  # no arguments needed
+                                max_workers=1,
+                                sleep_time=20)
 
     print("Time Taken to compress {:,} urls is {}s".format(total_urls,
                                                            time.time() - _start))
 
-    with open('status.json', 'r') as status_file:
-        bucket_name = json.loads(status_file.read()).get('bucket_name', False)
+    bucket_name = invocations.get_config()['custom']['bucketName']
 
     s3 = boto3.resource('s3')
     result_file = 'robots.json.gz'
     s3.Bucket(bucket_name).download_file(result_file, result_file)
 
     print("Time Taken to download file is {}s".format(time.time() - _start))
+
+    # Delete all files in the bucket
+    invocations.clear_bucket()

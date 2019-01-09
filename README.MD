@@ -15,40 +15,41 @@ It's a http scanner, that can scan websites for specific content, create a http 
 
 # Running
 
+## Dependencies
+Serverless Framework
+Python3.6 (or 3.7)
+
 ## To Install:
 
     $ git clone https://github.com/keithrozario/potassium40.git
-    $ cd potassium40
-    $ chmod +x install.sh
-    $ ./install.sh
+    $ cd potassium40/lambda
+    $ sls deploy
+    $ cd ..
+    $ python3 -m venv venv/
+    $ source venv/bin/activate
+    $ pip install -r requirements.txt
 
-For information of what is deployed during the install, refer to components below. By default all installations are done in `ap-southeast-1` but you can change this. The script uses the serverless framework to deploy, you will need this as well.
+For information of what is deployed during the install.
+
+By default all installations are done in `ap-southeast-1` but you can change this. The script uses the serverless framework to deploy, you will need this as well.
 
 ## To run :
 
     $ ./get_robots.py
 
-The default setting is 100 parallel lambdas scanning 125,000 sites. To scann all 1 million use the following:
+To scan all 1 million use the following:
 
-    $ ./get_robots.py -n 800
+    $ ./get_robots.py -n 800 -p 1250 -m 125
 
 the `n` command line argument is the number of lambda invocations. Each lambda will scan 1250 websites, hence 800 would scan all 1 million.
 
 ## To uninstall:
 
-    $ ./uninstall.sh
+    $ cd lambda
+    $ sls remove
   
-NOTE: an s3 bucket is created on install with the name p40.<uuid> , please delete all files in the bucket before uninstalling.
+NOTE: an s3 bucket is created on install with the name p40.<uuid> , please delete all files in the bucket before performing sls remove.
 
-# Components
-
-In order to run a proper scan, pottasium40 deploys the following components into your AWS account
-
-* 2 Lambda functions
-    * potassium40-functions-get_robots : Performs the scan and outputs data to an S3 bucket
-    * potassium40-functions-compress_bucket : Compresses all files in the S3 bucket into a single file (gzip)
-* 1 S3 Bucket with a randomly generated named, prefixed with p40-<uuid>
-* An IAM Role and IAM policy that allows the lambdas to access the bucket a CloudWatch LogGroups 
 
 # Warning
 
