@@ -11,6 +11,7 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.bucketName}
+        AccessControl: Private
 
 provider:
   name: aws
@@ -61,18 +62,18 @@ layers:
       artifact: layers/random_top-1m.csv.zip  # Cisco Umbrella top 1 million (randomized)
   majestic:
     package:
-      artifact: layers/random_top-1m.csv.zip  # Majestic 1 million (randomized)
-
+      artifact: layers/random_majestic_million.csv.zip  # Majestic 1 million (randomized)
 
 
 functions:
   get_robots:
-    handler: lambda_multiproc.get_robots
+    handler: custom_request.get_robots
     memorySize: 1280
     timeout: 180
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
     layers:
-      - {Ref: CiscoumbrellaLambdaLayer}
+      - {Ref: CiscoumbrellaLambdaLayer}  # uses CloudFormation reference format
+      - {Ref: MajesticLambdaLayer}  # uses CloudFormation reference format
       - Fn::Join:
         - ""
         - - "arn:aws:lambda:"
@@ -84,3 +85,8 @@ functions:
     memorySize: 3008
     timeout: 600
     description: Compress all files in S3 bucket into 1 single zip file
+  clear_bucket:
+    handler: clear_bucket.clear_bucket
+    memorySize: 128
+    timeout: 600
+    description: Delete all items from bucket
