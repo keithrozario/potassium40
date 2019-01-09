@@ -2,7 +2,6 @@ import json
 import yaml
 import time
 import boto3
-import math
 import os
 import datetime
 import concurrent.futures
