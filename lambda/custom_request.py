@@ -31,8 +31,9 @@ def request(rows, conn):
 
             if response.status_code == 200 and response.url[-10:] == 'robots.txt':
                 if 'user-agent:' in response.text.lower():
+                    # store robots.txt encoded in utf-8 (force it)
                     responses.append({'domain': url,
-                                      'robots.txt': response.text})
+                                      'robots.txt': response.content.decode('utf-8')})
                 else:
                     responses.append({'domain': url,
                                      'error': 'malformed'})
