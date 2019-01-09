@@ -1,3 +1,5 @@
+[![Updates](https://pyup.io/repos/github/keithrozario/potassium40/shield.svg)](https://pyup.io/repos/github/keithrozario/potassium40/)  [![Python 3](https://pyup.io/repos/github/keithrozario/potassium40/python-3-shield.svg)](https://pyup.io/repos/github/keithrozario/potassium40/)  [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/keithrozario/potassium40.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/keithrozario/potassium40/context:python)
+
 # What is Potassium40
 
 Pottasium40 is http scanner, that's built for speed..
