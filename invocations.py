@@ -205,7 +205,7 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
 
     print("{} functions to be invoked, reserving concurrency".format(len(payloads)))
     response = lambda_client.put_function_concurrency(FunctionName=function_name,
-                                                      ReservedConcurrentExecutions=len(payloads)+50)
+                                                      ReservedConcurrentExecutions=len(payloads)+1)
     print("{} now has {} reserved concurrent executions".format(function_name,
                                                                 response['ReservedConcurrentExecutions']))
 

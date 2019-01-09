@@ -7,7 +7,6 @@ import os
 import logging
 
 from multiprocessing import Process, Pipe
-from urllib.parse import urlparse
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 
@@ -27,21 +26,19 @@ def make_requests(urls, conn):
     for url in urls:
 
         try:
-            response = s.get(url,
+            response = s.get("http://{}/robots.txt".format(url),
                              verify=False,
                              timeout=1.5)
             if response.status_code == 200 and response.url[-10:] == 'robots.txt':
                 if 'user-agent:' in response.text.lower():
-                    responses.append({'domain': urlparse(url).netloc,
+                    responses.append({'domain': url,
                                       'robots.txt': response.text})
-            # else:
-            #     responses.append({'domain': urlparse(url).netloc,
-            #                       'status_code': response.status_code})
+                else:
+                    responses.append({'domain': url})
+            else:
+                responses.append({'domain': url})
         except:
-            pass
-            # logger.info('Exception occured for {}'.format(url))
-            # responses.append({'domain': urlparse(url).netloc,
-            #                   'error': 'timeout'})
+            responses.append({'domain': url})
 
     conn.send(responses)
     logger.debug("Sent: {}: ".format(urls))
@@ -97,12 +94,12 @@ def get_robots(event, context):
     logger.debug("Retrieving URLS")
     if event.get('urls', []):
         logger.debug("Processing {} urls in event ".format(len(urls)))
-        urls = ['http://{}/robots.txt'.format(url) for url in event['urls']]
+        urls = ['{}'.format(url) for url in event['urls']]
     elif 'end_pos' in event and 'start_pos' in event:
         logger.debug("Opening {}".format(file))
 
         with open(file, 'r', encoding='utf-8') as url_file:
-            urls = ['http://{}/robots.txt'.format(url.split(',')[1].strip())
+            urls = ['{}'.format(url.split(',')[1].strip())
                     for url in url_file.readlines()[event['start_pos']:event['end_pos']]]
 
         logger.debug("Processing {} urls from file".format(len(urls)))
@@ -125,7 +122,7 @@ def get_robots(event, context):
 
     # Upload file
     s3_client = boto3.client('s3')
-    file_name = "{}{}".format(urlparse(urls[0]).netloc, '.txt')
+    file_name = "{}{}".format(urls[0], '.txt')
     logger.debug("Uploading to bucket:{}".format(os.environ['bucket_name']))
     s3_client.upload_fileobj(file_obj, os.environ['bucket_name'], file_name)  # bucket name in env var
 

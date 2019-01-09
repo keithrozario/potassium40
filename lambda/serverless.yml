@@ -2,7 +2,8 @@
 service: potassium40
 
 custom:
-  bucketName: ${opt:bucket_name, file(./status.json):bucket_name}
+  aws_region: ap-southeast-1
+  bucketName: p40.123456
 
 resources:
   Resources:
@@ -16,7 +17,7 @@ provider:
   runtime: python3.7
   logRetentionDays: 1
   stage: functions
-  region: ${opt:region, 'ap-southeast-1'}
+  region: ${self:custom.aws_region}
   iamRoleStatements:
   # Bucket Permissions
   - Effect: Allow
