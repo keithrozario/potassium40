@@ -6,6 +6,7 @@ import boto3
 import requests
 import lambda_multiproc
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # There must be a logger called main_logger
@@ -36,9 +37,8 @@ def request(rows, conn):
 
             if response.status_code == 200 and response.url[-10:] == 'robots.txt':
                 if 'user-agent:' in response.text.lower():
-                    # store robots.txt encoded in utf-8 (force it)
                     responses.append({'domain': url,
-                                      'robots.txt': response.content.decode('utf-8')})
+                                      'robots.txt': response.text})
                 else:
                     responses.append({'domain': url,
                                      'error': 'malformed'})
