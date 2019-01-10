@@ -1,18 +1,12 @@
 import math
-import io
-import json
-import boto3
-import os
-import custom_request
 import logging
 from multiprocessing import Process, Pipe
 
-logger = logging.getLogger()
-level = logging.DEBUG
-logger.setLevel(level)
+# all functions that lambda_multiproc must create this logger
+logger = logging.getLogger('main_logger')
 
 
-def multiproc_requests(rows, proc_count):
+def multiproc_requests(rows, proc_count, func):
     logger.info('Spawning {} processes'.format(proc_count))
 
     per_proc = int(math.ceil(len(rows) / proc_count))
@@ -31,10 +25,10 @@ def multiproc_requests(rows, proc_count):
 
         # create the process, pass instance and connection
         sub_list = [x for x in rows[count * per_proc: (count + 1) * per_proc]]
-        process = Process(target=custom_request.request, args=(sub_list, child_conn,))
+        process = Process(target=func, args=(sub_list, child_conn,))
         processes.append(process)
 
-    logger.info("Making HTTP Requests for {} rows".format(len(rows)))
+    logger.info("Making Requests for {} rows".format(len(rows)))
     # start all processes
     for process in processes:
         process.start()
@@ -53,6 +47,20 @@ def multiproc_requests(rows, proc_count):
 
 
 def init_requests(event):
+
+    """
+    intializes multi processing of a file,
+    processing each row from start_row to end_row,
+    passing each row to function
+
+    event['file_name'] = File Name to process, file must be in the /opt directory
+    event['start_pos'] = start position (row number) of the file to begin process
+    event['end_pos'] = end position (row number) of the file to stop processing
+    event['function'] = function to process each row with
+    event['proc_count] = number of multiple processes to use
+
+    :return:
+    """
 
     logger.info("Starting...")
     # File is either provided in event['file_name'] or defaults to random_top-1m.csv
@@ -76,18 +84,6 @@ def init_requests(event):
                                                                         rows[0],
                                                                         rows[-1],
                                                                         proc_count))
-    results = multiproc_requests(rows, proc_count)
-    logger.debug("{}".format(results))
-    logger.info("Requests complete, creating result file")
+    results = multiproc_requests(rows, proc_count, event['function'])
 
-    # create file_obj in memory, must be in Binary form and implement read()
-    file_obj = io.BytesIO(json.dumps(results).encode('utf-8'))
-
-    # Upload file to bucket
-    s3_client = boto3.client('s3')
-    file_name = "{}-{}.{}".format(event['start_pos'], event['end_pos'], 'txt')
-    logger.debug("Uploading to bucket:{}".format(os.environ['bucket_name']))
-    s3_client.upload_fileobj(file_obj, os.environ['bucket_name'], file_name)  # bucket name in env var
-
-    return {'status': 200,
-            'result': file_name}
+    return results
