@@ -6,7 +6,7 @@ import boto3
 import requests
 import lambda_multiproc
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-import
+
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # There must be a logger called main_logger
