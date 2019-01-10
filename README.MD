@@ -1,16 +1,20 @@
-[![Updates](https://pyup.io/repos/github/keithrozario/potassium40/shield.svg)](https://pyup.io/repos/github/keithrozario/potassium40/)  [![Python 3](https://pyup.io/repos/github/keithrozario/potassium40/python-3-shield.svg)](https://pyup.io/repos/github/keithrozario/potassium40/)  [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/keithrozario/potassium40.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/keithrozario/potassium40/context:python)
+# Potassium40
+
+An application level scanner build on parallel AWS Lambda Functions!
+
+[![Updates](https://pyup.io/repos/github/keithrozario/potassium40/shield.svg)](https://pyup.io/repos/github/keithrozario/potassium40/)  [![Python 3](https://pyup.io/repos/github/keithrozario/potassium40/python-3-shield.svg)](https://pyup.io/repos/github/keithrozario/potassium40/)  [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/keithrozario/potassium40.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/keithrozario/potassium40/context:python)  ![](https://img.shields.io/github/license/keithrozario/potassium40.svg)
 
 # What is Potassium40
 
-Pottasium40 is http scanner, that's built for speed..
+Pottasium40 is application level scanner, that's built for speed..
 
-It uses AWS Lambda functions to invoke up to 1000 parallel functions that can scan 1 million domains in 5 minutes (or less!)
+It uses AWS Lambda functions to invoke up to 1000 parallel functions to perform application level scans on a list of domains/ips.
 
 This project **proof-of-concept** that will grab and download all `robots.txt` files from the cisco umbrella top 1 million. The code can be changed to grab any other file, or check for http-headers, presence of folders etc.
 
 This is **not** a port-scanner. 
 
-It's a http scanner, that can scan websites for specific content, create a http connection to a specific url, including handling redirects and negotiating TLS connections. If you want to scan ports, I suggest you use masscan.
+It's an application level scanner, that can scan websites for specific content, create a http connection to a specific url, including handling redirects and negotiating TLS connections. If you want to scan ports, I suggest you use masscan.
 
 **NOTE:** Potassium40 runs on Amazon Web Services (AWS), and while for most use-cases it'll fit into the free-tier, you will be charged if you go overboard. A scan of 1 million websites can be run ~10 times before you have to start paying, roughly $0.60 per 1 million websites.
 
