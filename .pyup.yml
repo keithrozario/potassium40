@@ -1,3 +1,6 @@
+update: insecure
+search: False
+
 requirements:
   - requirements.txt:
       update: insecure
