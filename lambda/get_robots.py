@@ -1,14 +1,19 @@
 import logging
+import io
+import json
+import os
+import boto3
 import requests
 import lambda_multiproc
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-
-headers = {'User-Agent': 'p40Bot'}
-logger = logging.getLogger()
+# There must be a logger called main_logger
+logger = logging.getLogger('main_logger')
 level = logging.INFO
 logger.setLevel(level)
+
+headers = {'User-Agent': 'p40Bot'}
 
 
 def request(rows, conn):
@@ -40,9 +45,9 @@ def request(rows, conn):
             else:
                 responses.append({'domain': url,
                                   'status': response.status_code})
-        except:
+        except requests.exceptions.RequestException as e:
             responses.append({'domain': url,
-                              'error': 'n.a'})
+                              'error': str(e)})
 
     conn.send(responses)
     conn.close()
@@ -55,8 +60,21 @@ def get_robots(event, context):
     """
 
     event['file_name'] = 'random_majestic_million.csv'
+    event['function'] = request  # pass the function
 
-    lambda_multiproc.init_requests(event)
+    results = lambda_multiproc.init_requests(event)
+
+    logger.info("{} results returned".format(len(results)))
+    logger.info("Requests complete, creating result file")
+
+    # create file_obj in memory, must be in Binary form and implement read()
+    file_obj = io.BytesIO(json.dumps(results).encode('utf-8'))
+
+    # Upload file to bucket
+    s3_client = boto3.client('s3')
+    file_name = "{}-{}.{}".format(event['start_pos'], event['end_pos'], 'txt')
+    logger.debug("Uploading to bucket:{}".format(os.environ['bucket_name']))
+    s3_client.upload_fileobj(file_obj, os.environ['bucket_name'], file_name)  # bucket name in env var
 
     return {"status": 200,
             "file_name": event['file_name']
