@@ -33,18 +33,13 @@ def request(rows, conn):
         try:
             response = s.get("http://{}/robots.txt".format(url),
                              verify=False,
-                             timeout=2)
+                             timeout=1.5)
 
             if response.status_code == 200 and response.url[-10:] == 'robots.txt':
                 if 'user-agent:' in response.text.lower():
                     responses.append({'domain': url,
                                       'robots.txt': response.text})
-                else:
-                    responses.append({'domain': url,
-                                     'error': 'malformed'})
-            else:
-                responses.append({'domain': url,
-                                  'status': response.status_code})
+
         except requests.exceptions.RequestException as e:
             responses.append({'domain': url,
                               'error': str(e)})
