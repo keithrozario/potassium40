@@ -44,6 +44,10 @@ provider:
         - - "arn:aws:s3:::"
           - ${self:custom.bucketName}
           - "/*"
+  - Effect: Allow
+    Action:
+    - lambda:InvokeFunction
+    Resource: "*" # no choice for now will see how to resolve circular dependency issue later
   environment:
     bucket_name: ${self:custom.bucketName}
 
@@ -68,8 +72,8 @@ layers:
 functions:
   get_robots:
     handler: get_robots.get_robots
-    memorySize: 1280
-    timeout: 180
+    memorySize: 1408
+    timeout: 120
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
     layers:
       - {Ref: CiscoumbrellaLambdaLayer}  # uses CloudFormation reference format
@@ -90,3 +94,9 @@ functions:
     memorySize: 128
     timeout: 600
     description: Delete all items from bucket
+  invoke_lambdas:
+    handler: invoke_lambdas.invoke_lambdas
+    memorySize: 128
+    timeout: 120
+    description: Invoke lambdas on behalf, faster invocations
+

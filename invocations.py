@@ -30,6 +30,13 @@ def invoke_lambda(function_name, region_name, payload, invocation_type, log_type
                                 LogType=log_type)
 
 
+def calc_concurrency(num_payloads):
+    if num_payloads > 100:
+        return num_payloads + 10
+    else:
+        return num_payloads
+
+
 def get_log_events(log_group_name, filter_pattern, start_time, return_messages=False, region_name=False):
 
     # if no region specified use region
@@ -87,9 +94,8 @@ def check_lambdas(function_name, num_invocations, start_time, region_name=False,
                                                  return_messages=False,
                                                  region_name=region_name)
         # Print Results
-        print("{} Lambdas Invoked, {} Lambdas Started, {} Lambdas completed".format(num_invocations,
-                                                                                    num_lambdas_started,
-                                                                                    num_lambdas_ended))
+        print("{} Lambdas Started, {} Lambdas completed".format(num_lambdas_started,
+                                                                num_lambdas_ended))
     return True
 
 
@@ -172,6 +178,8 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
     :return:
     """
 
+    per_lambda_invocation = 50   # each lambda will invoke 50 payloads
+
     # if no region specified use region
     if not region_name:
         config = get_config()
@@ -180,24 +188,39 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
     lambda_client = boto3.client('lambda', region_name=region_name)
 
     print("{} functions to be invoked, reserving concurrency".format(len(payloads)))
+    concurrency = calc_concurrency(len(payloads))
     response = lambda_client.put_function_concurrency(FunctionName=function_name,
-                                                      ReservedConcurrentExecutions=len(payloads))
+                                                      ReservedConcurrentExecutions=concurrency)
     print("{} now has {} reserved concurrent executions".format(function_name,
                                                                 response['ReservedConcurrentExecutions']))
 
-    print("Invoking Lambdas in {}".format(region_name))
+    print("\nInvoking Lambdas in {}".format(region_name))
     start_time = int(datetime.datetime.now().timestamp() * 1000)  # Epoch Time
 
-    response = {'result': None}
-    # Start invocations -- thank you @ustayready for this piece of insight :)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for k, payload in enumerate(payloads):
-            response = executor.submit(lambda_client.invoke,
-                                       FunctionName=function_name,
-                                       InvocationType='Event',
-                                       Payload=json.dumps(payload))
+    mark = 0
+    final_payloads = []
 
-    print("INFO: {} Lambdas invoked, checking status\n".format(len(payloads)))
+    for k, payload in enumerate(payloads):
+        # split payloads to per_lambda_invocations
+        if k % per_lambda_invocation == 0 and k != 0:
+            final_payloads.append(payloads[mark:k])
+            mark = k
+    # last payload (leftover)
+    final_payloads.append(payloads[mark:len(payloads)])
+
+    for k, payload in enumerate(final_payloads):
+        event = dict()
+        event['function_name'] = function_name
+        event['invocation_type'] = 'Event'
+        event['payloads'] = payload
+        lambda_client.invoke(FunctionName='potassium40-functions-invoke_lambdas',
+                             InvocationType='Event',
+                             Payload=json.dumps(event))
+        print("INFO: Invoking lambdas {} to {}".format(k * per_lambda_invocation,
+                                                       (k+1) * per_lambda_invocation))
+        time.sleep(0.5)  # don't invoke all at once
+
+    print("\nINFO: {} Lambdas invoked, checking status\n".format(len(payloads)))
     check_lambdas(function_name=function_name,
                   num_invocations=len(payloads),
                   start_time=start_time,
@@ -210,7 +233,7 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
     except ClientError:
         pass  # no concurrency set
 
-    return response.result()
+    return None
 
 
 def sync_in_region(function_name, payloads, region_name=False, max_workers=1, log_type='None'):
@@ -241,4 +264,4 @@ def sync_in_region(function_name, payloads, region_name=False, max_workers=1, lo
                 results.append({'resp_payload': resp_payload,
                                 'log_result': log_result})
 
-    return results
+    return None
