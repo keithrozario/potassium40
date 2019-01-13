@@ -14,11 +14,11 @@ if __name__ == '__main__':
                         help="Number of lambdas to invoke, default is 100",
                         default=100)
     parser.add_argument("-p", "--per_lambda",
-                        help="Number of records to process per lambda, default is 1000",
-                        default=1000)
+                        help="Number of records to process per lambda, default is 1250",
+                        default=1250)
     parser.add_argument("-m", "--multiproc_count",
                         help="Number of multi-processes per lambda, default is 125",
-                        default=1000)
+                        default=125)
 
     args = parser.parse_args()
 
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     invocations.async_in_region(function_name='potassium40-functions-compress_bucket',
                                 payloads=[{}],  # no arguments needed
                                 max_workers=1,
-                                sleep_time=20)
+                                sleep_time=5)
 
     print("Time Taken to compress {:,} urls is {}s".format(total_urls,
                                                            time.time() - _start))
