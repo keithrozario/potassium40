@@ -28,6 +28,7 @@ def request(rows, conn):
     responses = []
 
     for row in rows:
+        # get domain name from row of majestic top 1 million
         url = '{}'.format(row.split(',')[2].strip())
 
         try:
@@ -40,9 +41,10 @@ def request(rows, conn):
                     responses.append({'domain': url,
                                       'robots.txt': response.text})
 
-        except requests.exceptions.RequestException as e:
-            responses.append({'domain': url,
-                              'error': str(e)})
+        except requests.exceptions.RequestException:
+            pass
+        except UnicodeError:  # sometimes occur with websites
+            pass
 
     conn.send(responses)
     conn.close()
