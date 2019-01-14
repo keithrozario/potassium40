@@ -5,7 +5,7 @@ import json
 import os
 
 
-def compress_bucket(event,context):
+def compress_bucket(event, context):
     """
     compresses all files in an s3_bucket to a zip file
     """
