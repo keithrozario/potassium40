@@ -72,8 +72,8 @@ layers:
 functions:
   get_robots:
     handler: get_robots.get_robots
-    memorySize: 1408
-    timeout: 120
+    memorySize: 1280
+    timeout: 100
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
     layers:
       - {Ref: CiscoumbrellaLambdaLayer}  # uses CloudFormation reference format
