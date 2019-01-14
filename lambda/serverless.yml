@@ -19,6 +19,7 @@ provider:
   logRetentionDays: 1
   stage: functions
   region: ${self:custom.aws_region}
+  logRetentionInDays: 1  # don't need so many
   iamRoleStatements:
   # Bucket Permissions
   - Effect: Allow
