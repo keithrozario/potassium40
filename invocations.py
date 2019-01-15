@@ -1,9 +1,8 @@
 import json
 import yaml
-import time
 import boto3
 import os
-import datetime
+import time
 import concurrent.futures
 import base64
 from botocore.exceptions import ClientError
@@ -21,13 +20,17 @@ def get_config():
     return config
 
 
-def invoke_lambda(function_name, region_name, payload, invocation_type, log_type='None'):
-    lambda_client = boto3.client('lambda', region_name=region_name)
+def set_concurrency(num_payloads, lambda_client, function_name):
 
-    return lambda_client.invoke(FunctionName=function_name,
-                                InvocationType=invocation_type,
-                                Payload=payload,
-                                LogType=log_type)
+    if num_payloads < 100:
+        return None
+    else:
+        print("{} functions to be invoked, reserving concurrency".format(num_payloads))
+        response = lambda_client.put_function_concurrency(FunctionName=function_name,
+                                                          ReservedConcurrentExecutions=num_payloads + 10)
+        print("{} now has {} reserved concurrent executions".format(function_name,
+                                                                    response['ReservedConcurrentExecutions']))
+        return None
 
 
 def calc_concurrency(num_payloads):
@@ -37,42 +40,40 @@ def calc_concurrency(num_payloads):
         return num_payloads
 
 
-def get_log_events(log_group_name, filter_pattern, start_time, return_messages=False, region_name=False):
+def get_log_events(client, function_name, start_time, region_name=False):
+
+    """
+    Returns the number of events that match a filter patter for the log_group from start_time till now
+
+    """
+
+    payload = {'function_name': function_name, 'start_time': start_time}
+
+    response = client.invoke(FunctionName='potassium40-functions-check_lambda',
+                             InvocationType='RequestResponse',
+                             Payload=json.dumps(payload))
+
+    result = json.loads(response['Payload'].read())
+    lambda_count = json.loads(result['results'])
+
+    started = lambda_count['START RequestId']
+    ended = lambda_count['END RequestId']
+
+    return started, ended
+
+
+def check_lambdas(function_name, num_invocations, start_time, region_name=False, sleep_time=3):
+
+    print("Checking Lambdas in {}".format(region_name))
+    num_lambdas_started = 0
+    num_lambdas_ended = 0
 
     # if no region specified use region
     if not region_name:
         config = get_config()
         region_name = config['custom']['aws_region']
 
-    log_client = boto3.client('logs', region_name=region_name)
-    response = log_client.filter_log_events(logGroupName=log_group_name,
-                                            filterPattern=filter_pattern,
-                                            startTime=start_time)
-    num_events = len(response.get('events', []))
-    messages = [event['message'] for event in response.get('events', [])]
-
-    # loop through finding all logs
-    while response.get('nextToken', False):
-        response = log_client.filter_log_events(logGroupName=log_group_name,
-                                                filterPattern=filter_pattern,
-                                                startTime=start_time,
-                                                nextToken=response['nextToken'])
-        num_events += len(response.get('events', []))
-        new_messages = [event['message'] for event in response.get('events', [])]
-        messages.append(new_messages)
-
-    if return_messages:
-        return messages
-    else:
-        return num_events
-
-
-def check_lambdas(function_name, num_invocations, start_time, region_name=False, sleep_time=3):
-
-    log_group_name = '/aws/lambda/{}'.format(function_name)
-    print("Checking Lambdas in {}".format(region_name))
-    num_lambdas_started = 0
-    num_lambdas_ended = 0
+    client = boto3.client('lambda', region_name=region_name)
 
     while True:
         time.sleep(sleep_time)
@@ -80,19 +81,10 @@ def check_lambdas(function_name, num_invocations, start_time, region_name=False,
             print('All lambdas ended!')
             break
         else:
-            num_lambdas_ended = get_log_events(log_group_name=log_group_name,
-                                               filter_pattern='END RequestId',
-                                               start_time=start_time,
-                                               return_messages=False,
-                                               region_name=region_name)
-
-        # Only check if not all lambdas are started
-        if num_lambdas_started != num_invocations:
-            num_lambdas_started = get_log_events(log_group_name=log_group_name,
-                                                 filter_pattern='START RequestId',
-                                                 start_time=start_time,
-                                                 return_messages=False,
-                                                 region_name=region_name)
+            num_lambdas_started, num_lambdas_ended = get_log_events(client=client,
+                                                                    function_name=function_name,
+                                                                    start_time=start_time,
+                                                                    region_name=region_name)
         # Print Results
         print("{} Lambdas Started, {} Lambdas completed".format(num_lambdas_started,
                                                                 num_lambdas_ended))
@@ -164,7 +156,7 @@ def download_bucket():
         s3.Bucket(config['bucket_name']).download_file(key, result_folder + '/{}'.format(key))
 
 
-def async_in_region(function_name, payloads, region_name=False, max_workers=1, sleep_time=3):
+def async_in_region(function_name, payloads, region_name=False, sleep_time=3):
 
     """
     Invokes lambda functions asynchronously in on region
@@ -186,16 +178,10 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
         region_name = config['custom']['aws_region']
 
     lambda_client = boto3.client('lambda', region_name=region_name)
-
-    print("{} functions to be invoked, reserving concurrency".format(len(payloads)))
-    concurrency = calc_concurrency(len(payloads))
-    response = lambda_client.put_function_concurrency(FunctionName=function_name,
-                                                      ReservedConcurrentExecutions=concurrency)
-    print("{} now has {} reserved concurrent executions".format(function_name,
-                                                                response['ReservedConcurrentExecutions']))
+    set_concurrency(len(payloads), lambda_client, function_name)
 
     print("\nInvoking Lambdas in {}".format(region_name))
-    start_time = int(datetime.datetime.now().timestamp() * 1000)  # Epoch Time
+    start_time = int(time.time())  # Epoch Time
 
     mark = 0
     final_payloads = []
@@ -205,6 +191,7 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
         if k % per_lambda_invocation == 0 and k != 0:
             final_payloads.append(payloads[mark:k])
             mark = k
+
     # last payload (leftover)
     final_payloads.append(payloads[mark:len(payloads)])
 
@@ -218,7 +205,7 @@ def async_in_region(function_name, payloads, region_name=False, max_workers=1, s
                              Payload=json.dumps(event))
         print("INFO: Invoking lambdas {} to {}".format(k * per_lambda_invocation,
                                                        (k+1) * per_lambda_invocation))
-        time.sleep(0.5)  # don't invoke all at once
+        time.sleep(3)  # don't invoke all at once
 
     print("\nINFO: {} Lambdas invoked, checking status\n".format(len(payloads)))
     check_lambdas(function_name=function_name,
