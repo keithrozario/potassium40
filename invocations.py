@@ -181,7 +181,7 @@ def async_in_region(function_name, payloads, region_name=False, sleep_time=3):
     set_concurrency(len(payloads), lambda_client, function_name)
 
     print("\nInvoking Lambdas in {}".format(region_name))
-    start_time = int(time.time())  # Epoch Time
+    start_time = int(time.time() * 1000)  # Epoch Time in milliseconds
 
     mark = 0
     final_payloads = []
