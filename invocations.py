@@ -53,11 +53,15 @@ def get_log_events(client, function_name, start_time, region_name=False):
                              InvocationType='RequestResponse',
                              Payload=json.dumps(payload))
 
-    result = json.loads(response['Payload'].read())
-    lambda_count = json.loads(result['results'])
+    try:
+        result = json.loads(response['Payload'].read())
+        lambda_count = json.loads(result['results'])
 
-    started = lambda_count['START RequestId']
-    ended = lambda_count['END RequestId']
+        started = lambda_count['START RequestId']
+        ended = lambda_count['END RequestId']
+    except KeyError:
+        started = 0
+        ended = 0
 
     return started, ended
 
