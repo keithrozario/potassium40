@@ -45,10 +45,17 @@ provider:
         - - "arn:aws:s3:::"
           - ${self:custom.bucketName}
           - "/*"
+  # Invoke lambda permissions (might be deprecated in future versions)
   - Effect: Allow
     Action:
     - lambda:InvokeFunction
-    Resource: "*" # no choice for now will see how to resolve circular dependency issue later
+    Resource: "*" # no choice for now, will see how to resolve circular dependency issue later
+  # filter log events permissions (might be deprecated in future versions)
+  - Effect: Allow
+    Action:
+    - logs:FilterLogEvents
+    Resource: "*" # no choice for now, will see how to resolve circular dependency issue later
+
   environment:
     bucket_name: ${self:custom.bucketName}
 
@@ -100,4 +107,9 @@ functions:
     memorySize: 128
     timeout: 120
     description: Invoke lambdas on behalf, faster invocations
+  check_lambda:
+    handler: check_lambda.check_lambda
+    memorySize: 128
+    timeout: 30
+    description: Check status of a lambda, how many started and ended
 
