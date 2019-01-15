@@ -60,7 +60,7 @@ def get_robots(event, context):
     event['function'] = request  # pass the function
 
     results = lambda_multiproc.init_requests(event)
-
+    logger.info("__start__")
     logger.info("{} results returned".format(len(results)))
     logger.info("Requests complete, creating result file")
 
@@ -72,6 +72,7 @@ def get_robots(event, context):
     file_name = "{}-{}.{}".format(event['start_pos'], event['end_pos'], 'txt')
     logger.debug("Uploading to bucket:{}".format(os.environ['bucket_name']))
     s3_client.upload_fileobj(file_obj, os.environ['bucket_name'], file_name)  # bucket name in env var
+    logger.info("__end__")
 
     return {"status": 200,
             "file_name": event['file_name']
