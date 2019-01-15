@@ -40,7 +40,7 @@ def calc_concurrency(num_payloads):
         return num_payloads
 
 
-def get_log_events(client, function_name, start_time, region_name=False):
+def get_log_events(client, function_name, start_time):
 
     """
     Returns the number of events that match a filter patter for the log_group from start_time till now
@@ -56,20 +56,16 @@ def get_log_events(client, function_name, start_time, region_name=False):
     try:
         result = json.loads(response['Payload'].read())
         lambda_count = json.loads(result['results'])
-
-        started = lambda_count['START RequestId']
         ended = lambda_count['END RequestId']
     except KeyError:
-        started = 0
         ended = 0
 
-    return started, ended
+    return ended
 
 
 def check_lambdas(function_name, num_invocations, start_time, region_name=False, sleep_time=3):
 
     print("Checking Lambdas in {}".format(region_name))
-    num_lambdas_started = 0
     num_lambdas_ended = 0
 
     # if no region specified use region
@@ -85,12 +81,11 @@ def check_lambdas(function_name, num_invocations, start_time, region_name=False,
             print('All lambdas ended!')
             break
         else:
-            num_lambdas_started, num_lambdas_ended = get_log_events(client=client,
-                                                                    function_name=function_name,
-                                                                    start_time=start_time,
-                                                                    region_name=region_name)
+            num_lambdas_ended = get_log_events(client=client,
+                                               function_name=function_name,
+                                               start_time=start_time)
         # Print Results
-        print("{} Lambdas Started, {} Lambdas completed".format(num_lambdas_started,
+        print("{} Lambdas Invoked, {} Lambdas completed".format(num_invocations,
                                                                 num_lambdas_ended))
     return True
 
@@ -182,6 +177,10 @@ def async_in_region(function_name, payloads, region_name=False, sleep_time=3):
         region_name = config['custom']['aws_region']
 
     lambda_client = boto3.client('lambda', region_name=region_name)
+    log_client = boto3.client('logs', region_name=region_name)
+    log_client.delete_log_group(logGroupName='/aws/lambda/{}'.format(function_name))
+    log_client.create_log_group(logGroupName='/aws/lambda/{}'.format(function_name))
+
     set_concurrency(len(payloads), lambda_client, function_name)
 
     print("\nInvoking Lambdas in {}".format(region_name))

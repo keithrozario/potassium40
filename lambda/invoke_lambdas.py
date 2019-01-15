@@ -27,3 +27,4 @@ def invoke_lambdas(event, context):
                              Payload=json.dumps(payload))
 
     return {"statusCode": 200}
+

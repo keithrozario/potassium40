@@ -7,7 +7,7 @@ logger = logging.getLogger('main_logger')
 
 
 def multiproc_requests(rows, proc_count, func):
-    logger.info('Spawning {} processes'.format(proc_count))
+    logger.debug('Spawning {} processes'.format(proc_count))
 
     per_proc = int(math.ceil(len(rows) / proc_count))
 
@@ -28,15 +28,15 @@ def multiproc_requests(rows, proc_count, func):
         process = Process(target=func, args=(sub_list, child_conn,))
         processes.append(process)
 
-    logger.info("Making Requests for {} rows".format(len(rows)))
+    logger.debug("Making Requests for {} rows".format(len(rows)))
     # start all processes
     for process in processes:
         process.start()
 
-    logger.info("Processes Started, waiting for closed connections")
+    logger.debug("Processes Started, waiting for closed connections")
 
     responses = []
-    logger.info("Reading info")
+    logger.debug("Reading info")
     for parent_connection in parent_connections:
         responses.extend(parent_connection.recv())
 
@@ -62,7 +62,7 @@ def init_requests(event):
     :return:
     """
 
-    logger.info("Starting...")
+    logger.debug("Starting...")
     # File is either provided in event['file_name'] or defaults to random_top-1m.csv
     file = "/opt/{}".format(event.get('file_name', 'random_top-1m.csv'))
     logger.debug("Retrieving rows from {}".format(file))

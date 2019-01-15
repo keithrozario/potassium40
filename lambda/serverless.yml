@@ -110,6 +110,5 @@ functions:
   check_lambda:
     handler: check_lambda.check_lambda
     memorySize: 128
-    timeout: 30
+    timeout: 90
     description: Check status of a lambda, how many started and ended
-

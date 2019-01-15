@@ -1,5 +1,10 @@
 import boto3
 import json
+import logging
+
+logger = logging.getLogger()
+level = logging.INFO
+logger.setLevel(level)
 
 
 def check_lambda(event, context):
@@ -13,7 +18,7 @@ def check_lambda(event, context):
     log_group_name = '/aws/lambda/{}'.format(event['function_name'])
     start_time = event['start_time']
 
-    filter_patterns = ['END RequestId', 'START RequestId']
+    filter_patterns = ['END RequestId']  # don't get the Started
     results = dict()
 
     for filter_pattern in filter_patterns:
@@ -22,6 +27,7 @@ def check_lambda(event, context):
                                                 filterPattern=filter_pattern,
                                                 startTime=start_time)
         num_events = len(response.get('events', []))
+        logger.info("Found {} events".format(num_events))
 
         # loop through finding all logs
         while response.get('nextToken', False):
@@ -30,8 +36,18 @@ def check_lambda(event, context):
                                                     startTime=start_time,
                                                     nextToken=response['nextToken'])
             num_events += len(response.get('events', []))
+            logger.info("Found {} events".format(num_events))
 
+        logger.info("Done")
         results[filter_pattern] = num_events
 
     return {'status': 200,
             'results': json.dumps(results)}
+
+
+if __name__ == '__main__':
+    event = {
+            "function_name": "potassium40-functions-get_robots",
+            "start_time": 0
+            }
+    check_lambda(event, {})

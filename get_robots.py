@@ -34,6 +34,9 @@ if __name__ == '__main__':
                          'end_pos': (x+1) * per_lambda,
                          'proc_count': proc_count})  # proc_count is the number of processes per lambda
 
+    # Delete all files in the bucket
+    invocations.clear_bucket()
+
     _start = time.time()
     invocations.async_in_region(function_name='potassium40-functions-get_robots',
                                 payloads=payloads,
@@ -58,5 +61,4 @@ if __name__ == '__main__':
 
     print("Time Taken to download file is {}s".format(time.time() - _start))
 
-    # Delete all files in the bucket
-    invocations.clear_bucket()
+
