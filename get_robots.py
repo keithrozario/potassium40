@@ -12,7 +12,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--num_invocations",
                         help="Number of lambdas to invoke, default is 100",
-                        default=10)
+                        default=5)
     parser.add_argument("-p", "--per_lambda",
                         help="Number of records to process per lambda, default is 1250",
                         default=2)
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     _start = time.time()
     invocations.async_in_region(function_name='potassium40-functions-get_robots',
                                 payloads=payloads,
-                                sleep_time=10)
+                                sleep_time=2)
 
     _end = time.time()
     print("Time Taken to process {:,} urls is {}s".format(total_urls,

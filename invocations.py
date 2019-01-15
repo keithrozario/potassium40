@@ -204,9 +204,11 @@ def async_in_region(function_name, payloads, region_name=False, sleep_time=3):
         event['function_name'] = function_name
         event['invocation_type'] = 'Event'
         event['payloads'] = payload
+
         lambda_client.invoke(FunctionName='potassium40-functions-invoke_lambdas',
                              InvocationType='Event',
                              Payload=json.dumps(event))
+
         print("INFO: Invoking lambdas {} to {}".format(k * per_lambda_invocation,
                                                        (k+1) * per_lambda_invocation))
         time.sleep(3)  # don't invoke all at once
