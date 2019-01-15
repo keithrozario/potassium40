@@ -1,12 +1,17 @@
 import boto3
 import os
+import logging
+
+logger = logging.getLogger()
+level = logging.INFO
+logger.setLevel(level)
 
 
 def clear_bucket(event,context):
     """
     compresses all files in an s3_bucket to a zip file
     """
-
+    logger.info('__start__')
     s3_client = boto3.client('s3')
 
     kwargs = {'Bucket': os.environ['bucket_name']}
@@ -29,5 +34,5 @@ def clear_bucket(event,context):
             kwargs['ContinuationToken'] = resp['NextContinuationToken']
         except KeyError:
             break
-
+    logger.info('__end__')
     return keys
