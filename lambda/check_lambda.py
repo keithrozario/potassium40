@@ -35,8 +35,14 @@ def check_lambda(event, context):
                                                     filterPattern=filter_pattern,
                                                     startTime=start_time,
                                                     nextToken=response['nextToken'])
-            num_events += len(response.get('events', []))
-            logger.info("Found {} events".format(num_events))
+            num_messages = len(response.get('events', []))
+            num_events += num_messages
+            logger.debug("Found {} events".format(num_events))
+
+            if num_messages > 0:
+                results['timestamp'] = response['events'][num_messages - 1]['timestamp']
+            else:
+                pass
 
         logger.info("Done")
         results[filter_pattern] = num_events
@@ -50,4 +56,5 @@ if __name__ == '__main__':
             "function_name": "potassium40-functions-get_robots",
             "start_time": 0
             }
-    check_lambda(event, {})
+    response = check_lambda(event, {})
+    print(response)
