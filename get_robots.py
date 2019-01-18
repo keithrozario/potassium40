@@ -7,8 +7,6 @@ import argparse
 
 if __name__ == '__main__':
 
-    invocations.clear_bucket()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--num_invocations",
                         help="Number of lambdas to invoke, default is 100",
@@ -29,13 +27,13 @@ if __name__ == '__main__':
 
     payloads = []
 
+    # clear the bucket before we start
+    invocations.clear_bucket()
+
     for x in range(int(num_invocations)):
         payloads.append({'start_pos': x * per_lambda,
                          'end_pos': (x+1) * per_lambda,
                          'proc_count': proc_count})  # proc_count is the number of processes per lambda
-
-    # Delete all files in the bucket
-    invocations.clear_bucket()
 
     _start = time.time()
     invocations.async_in_region(function_name='potassium40-functions-get_robots',

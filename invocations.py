@@ -112,7 +112,7 @@ def clear_bucket():
             s3_client.delete_objects(Bucket=bucket_name,
                                      Delete={'Objects': keys})
         else:
-            print("Bucket is empty.")
+            pass
 
         # try the next iteration, (list_objects_v2 only returns first 1000 entries)
         try:
@@ -120,7 +120,8 @@ def clear_bucket():
         except KeyError:
             break
 
-    return keys
+    print("Bucket {} is empty".format(bucket_name))
+    return None
 
 
 def download_bucket():
