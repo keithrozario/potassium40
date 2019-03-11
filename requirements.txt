@@ -1,9 +1,9 @@
-boto3==1.9.77
-botocore==1.12.77
+boto3==1.9.111
+botocore==1.12.111
 docutils==0.14
-jmespath==0.9.3
-python-dateutil==2.7.5
+jmespath==0.9.4
+python-dateutil==2.8.0
 PyYAML==4.2b4
-s3transfer==0.1.13
+s3transfer==0.2.0
 six==1.12.0
 urllib3==1.24.1
