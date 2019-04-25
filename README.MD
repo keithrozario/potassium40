@@ -71,7 +71,7 @@ I intend to write in more detail about the architecture, but for now here's a qu
 
 # Results
 
-If you just want the robots.txt files, [here's the latest scan I did](https://www.dropbox.com/s/u06emca53n38dm9/robots.json.gz?dl=0)
+If you just want the robots.txt files, [here's the latest scan I did](https://www.dropbox.com/s/3zja5hfr7zlo9p0/robots.json.gz?dl=0)
 
 # To do
 
