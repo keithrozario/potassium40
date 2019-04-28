@@ -9,6 +9,7 @@ import argparse
 import boto3
 
 import invocations
+import athena_functions
 
 
 if __name__ == '__main__':
@@ -31,10 +32,10 @@ if __name__ == '__main__':
                         default=5)
     parser.add_argument("-p", "--per_lambda",
                         help="Number of records to process per lambda, default is 1250",
-                        default=2)
+                        default=10)
     parser.add_argument("-m", "--multiproc_count",
                         help="Number of multi-processes per lambda, default is 125",
-                        default=2)
+                        default=5)
 
     args = parser.parse_args()
 
@@ -51,6 +52,7 @@ if __name__ == '__main__':
 
     # Get Configuration
     config = invocations.get_config()
+    bucket_name = config['custom']['bucketName']
     region = config['custom']['aws_region']
     service_name = config['service']
     queue_name = config['custom']['queueName']
@@ -64,7 +66,8 @@ if __name__ == '__main__':
                          'proc_count': proc_count})  # proc_count is the number of processes per lambda
     
     # Package Payloads into SQS Messages
-    sqs_messages = [{'MessageBody': json.dumps(payload), 'Id': uuid.uuid4().__str__()} for payload in payloads]
+    sqs_messages = [{'MessageBody': json.dumps(payload), 
+                     'Id': uuid.uuid4().__str__()} for payload in payloads]
 
     _start = time.time()
     invocations.put_sqs(sqs_messages, queue_name)
@@ -73,19 +76,17 @@ if __name__ == '__main__':
     print("Time Taken to process {:,} urls is {}s".format(total_urls,
                                                           time.time() - _start))
 
-    # invocations.async_in_region(function_name='potassium40-functions-compress_bucket',
-    #                             payloads=[{}],  # no arguments needed
-    #                             sleep_time=10)
+    athena_functions.create_athena_db(bucket_name, region)
+    result_file = athena_functions.query_robots(bucket_name, region)
 
-    # print("Time Taken to compress {:,} urls is {}s".format(total_urls,
-    #                                                        time.time() - _start))
+    print("Time Taken to query {:,} urls is {}s".format(total_urls,
+                                                        time.time() - _start))
 
-    # bucket_name = invocations.get_config()['custom']['bucketName']
+    s3 = boto3.resource('s3')
+    result_file_key = result_file.replace(f's3://{bucket_name}/', '')
+    logger.info(f'Downloading {result_file_key}')
+    s3.Bucket(bucket_name).download_file(result_file_key, result_file_key.split('/')[-1])
 
-    # s3 = boto3.resource('s3')
-    # result_file = 'robots.json.gz'
-    # s3.Bucket(bucket_name).download_file(result_file, result_file)
-
-    # print("Time Taken to download file is {}s".format(time.time() - _start))
+    print("Time Taken to download file is {}s".format(time.time() - _start))
 
 

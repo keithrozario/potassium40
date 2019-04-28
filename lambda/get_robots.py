@@ -56,32 +56,33 @@ def get_robots(event, context):
     Wrapper around init_requests, set the name of the file to read here.
     """
 
+    s3_prefix = 'robots/'
+
     try:
         message = json.loads(event['Records'][0]['body'])
     except (json.JSONDecodeError, KeyError):
         logger.info("JSON Decoder error for event: {}".format(event))
         return {'status': 500}
-    
 
     message['file_name'] = 'random_majestic_million.csv'
     message['function'] = request  # pass the function
 
-    logger.info(message)
+    results = lambda_multiproc.init_requests(message)
+    logger.debug("{} results returned".format(len(results)))
+    logger.debug("Requests complete, creating result file")
 
-    return {"status": 200}
-    # results = lambda_multiproc.init_requests(message)
-    # logger.debug("{} results returned".format(len(results)))
-    # logger.debug("Requests complete, creating result file")
+    # create file_obj in memory, must be in Binary form and implement read()
+    with io.BytesIO() as file_obj:
+        for result in results:
+            file_obj.write(json.dumps(result).encode('utf-8'))
+            file_obj.write('\n'.encode('utf-8'))
+        file_obj.seek(0)  # set to beginning of stream
+        # Upload file to bucket
+        s3_client = boto3.client('s3')
+        file_name = "{}-{}.{}".format(message['start_pos'], message['end_pos'], 'txt')
+        logger.debug("Uploading to bucket:{}".format(os.environ['bucket_name']))
+        s3_client.upload_fileobj(file_obj, os.environ['bucket_name'], s3_prefix + file_name)
 
-    # # create file_obj in memory, must be in Binary form and implement read()
-    # file_obj = io.BytesIO(json.dumps(results).encode('utf-8'))
-
-    # # Upload file to bucket
-    # s3_client = boto3.client('s3')
-    # file_name = "{}-{}.{}".format(event['start_pos'], event['end_pos'], 'txt')
-    # logger.debug("Uploading to bucket:{}".format(os.environ['bucket_name']))
-    # s3_client.upload_fileobj(file_obj, os.environ['bucket_name'], file_name)  # bucket name in env var
-
-    # return {"status": 200,
-    #         "file_name": event['file_name']
-    #         }
+    return {"status": 200,
+            "file_name": message['file_name']
+            }

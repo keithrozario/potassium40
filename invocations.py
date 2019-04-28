@@ -16,7 +16,7 @@ result_folder = 'result'
 def get_config():
 
     with open('lambda/serverless.yml', 'r') as sls_config:
-        config = yaml.load(sls_config.read())
+        config = yaml.load(sls_config.read(), Loader=yaml.Loader)
 
     return config
 
@@ -236,6 +236,7 @@ def sync_in_region(function_name, payloads, region_name=False, max_workers=1, lo
                                 'log_result': log_result})
 
     return None
+
 
 def check_queue(queue_name):
     """

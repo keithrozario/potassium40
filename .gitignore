@@ -16,6 +16,7 @@ var/
 .installed.cfg
 *.egg
 venv/*
+venv
 
 
 # Serverless directories
@@ -24,3 +25,4 @@ lambda/status.json
 robots.json.gz
 lambda/node_modules/
 lambda/node_modules
+scan.log
