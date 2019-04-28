@@ -25,3 +25,145 @@
 04/28/2019 11:00:15 AM Failed to send: 0
 04/28/2019 11:00:15 AM Checking SQS Que....
 04/28/2019 11:00:25 AM 0 messages left on Que, 0 messages not visible
+04/28/2019 06:18:18 PM Clearing bucket before beginning....
+04/28/2019 06:18:18 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 06:18:19 PM Using Serverless deployment potassium40
+04/28/2019 06:18:19 PM Using SQS Queue: p40-scan-queue
+04/28/2019 06:18:19 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 06:18:19 PM Total Messages: 5
+04/28/2019 06:18:19 PM Successfully sent: 5
+04/28/2019 06:18:19 PM Failed to send: 0
+04/28/2019 06:18:19 PM Checking SQS Que....
+04/28/2019 06:18:29 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:18:39 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:18:49 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:18:59 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:19:09 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:19:19 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:19:29 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:19:39 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:20:56 PM Clearing bucket before beginning....
+04/28/2019 06:20:56 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 06:20:56 PM Using Serverless deployment potassium40
+04/28/2019 06:20:56 PM Using SQS Queue: p40-scan-queue
+04/28/2019 06:20:56 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 06:20:56 PM Total Messages: 5
+04/28/2019 06:20:56 PM Successfully sent: 5
+04/28/2019 06:20:56 PM Failed to send: 0
+04/28/2019 06:20:56 PM Checking SQS Que....
+04/28/2019 06:21:06 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:21:16 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:21:26 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:22:46 PM Clearing bucket before beginning....
+04/28/2019 06:22:46 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 06:22:46 PM Using Serverless deployment potassium40
+04/28/2019 06:22:46 PM Using SQS Queue: p40-scan-queue
+04/28/2019 06:22:46 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 06:22:46 PM Total Messages: 5
+04/28/2019 06:22:46 PM Successfully sent: 5
+04/28/2019 06:22:46 PM Failed to send: 0
+04/28/2019 06:22:46 PM Checking SQS Que....
+04/28/2019 06:22:56 PM 0 messages left on Que, 0 messages not visible
+04/28/2019 06:53:16 PM Clearing bucket before beginning....
+04/28/2019 06:53:16 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 06:53:17 PM Using Serverless deployment potassium40
+04/28/2019 06:53:17 PM Using SQS Queue: p40-scan-queue
+04/28/2019 06:53:18 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 06:53:18 PM Total Messages: 5
+04/28/2019 06:53:18 PM Successfully sent: 5
+04/28/2019 06:53:18 PM Failed to send: 0
+04/28/2019 06:53:18 PM Checking SQS Que....
+04/28/2019 06:53:28 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:53:38 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:53:48 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:53:58 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:54:08 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:54:18 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:54:28 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:54:38 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:54:48 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:54:58 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:55:08 PM 0 messages left on Que, 5 messages not visible
+04/28/2019 06:55:18 PM Clearing bucket before beginning....
+04/28/2019 06:55:18 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 06:55:18 PM Using Serverless deployment potassium40
+04/28/2019 06:55:18 PM Using SQS Queue: p40-scan-queue
+04/28/2019 06:55:18 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 06:55:18 PM Total Messages: 5
+04/28/2019 06:55:18 PM Successfully sent: 5
+04/28/2019 06:55:18 PM Failed to send: 0
+04/28/2019 06:55:18 PM Checking SQS Que....
+04/28/2019 06:55:28 PM 4 messages left on Que, 0 messages not visible
+04/28/2019 06:55:38 PM 0 messages left on Que, 2 messages not visible
+04/28/2019 06:55:48 PM 0 messages left on Que, 0 messages not visible
+04/28/2019 06:58:39 PM Clearing bucket before beginning....
+04/28/2019 06:58:39 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 06:58:39 PM Using Serverless deployment potassium40
+04/28/2019 06:58:39 PM Using SQS Queue: p40-scan-queue
+04/28/2019 06:58:39 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 06:58:39 PM Total Messages: 5
+04/28/2019 06:58:39 PM Successfully sent: 5
+04/28/2019 06:58:39 PM Failed to send: 0
+04/28/2019 06:58:39 PM Checking SQS Que....
+04/28/2019 06:58:49 PM 0 messages left on Que, 0 messages not visible
+04/28/2019 09:22:16 PM Clearing bucket before beginning....
+04/28/2019 09:22:16 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 09:22:16 PM Using Serverless deployment potassium40
+04/28/2019 09:22:16 PM Using SQS Queue: p40-scan-queue
+04/28/2019 09:22:16 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 09:22:16 PM Total Messages: 5
+04/28/2019 09:22:16 PM Successfully sent: 5
+04/28/2019 09:22:16 PM Failed to send: 0
+04/28/2019 09:22:16 PM Checking SQS Que....
+04/28/2019 09:22:26 PM 0 messages left on Que, 0 messages not visible
+04/28/2019 10:41:44 PM Clearing bucket before beginning....
+04/28/2019 10:41:44 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 10:41:44 PM Using Serverless deployment potassium40
+04/28/2019 10:41:44 PM Using SQS Queue: p40-scan-queue
+04/28/2019 10:41:44 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 10:41:44 PM Total Messages: 5
+04/28/2019 10:41:44 PM Successfully sent: 5
+04/28/2019 10:41:44 PM Failed to send: 0
+04/28/2019 10:41:44 PM Checking SQS Que....
+04/28/2019 10:41:54 PM 0 messages left on Que, 0 messages not visible
+04/28/2019 11:32:37 PM Clearing bucket before beginning....
+04/28/2019 11:32:37 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 11:32:37 PM Using Serverless deployment potassium40
+04/28/2019 11:32:37 PM Using SQS Queue: p40-scan-queue
+04/28/2019 11:32:39 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 11:32:39 PM Total Messages: 5
+04/28/2019 11:32:39 PM Successfully sent: 5
+04/28/2019 11:32:39 PM Failed to send: 0
+04/28/2019 11:32:39 PM Checking SQS Que....
+04/28/2019 11:32:49 PM 0 messages left on Que, 0 messages not visible
+04/28/2019 11:32:49 PM Creating Athena Database and Tables
+04/28/2019 11:33:54 PM Clearing bucket before beginning....
+04/28/2019 11:33:54 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 11:33:54 PM Using Serverless deployment potassium40
+04/28/2019 11:33:54 PM Using SQS Queue: p40-scan-queue
+04/28/2019 11:33:54 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 11:33:54 PM Total Messages: 5
+04/28/2019 11:33:54 PM Successfully sent: 5
+04/28/2019 11:33:54 PM Failed to send: 0
+04/28/2019 11:33:54 PM Checking SQS Que....
+04/28/2019 11:34:04 PM 0 messages left on Que, 0 messages not visible
+04/28/2019 11:34:04 PM Creating Athena Database and Tables
+04/28/2019 11:34:05 PM Succeeded. Location: s3://p40.123456/athena/8f3e815c-d6fd-4efa-bb8d-6eb547a3693b.txt
+04/28/2019 11:34:07 PM Succeeded. Location: s3://p40.123456/athena/8192e402-5c77-4130-80bd-8466c0ce3de2.txt
+04/28/2019 11:34:09 PM Succeeded in Querying bucket. Result Location: s3://p40.123456/athena/dc2e11a1-64db-4847-9aa1-4fd515d80474.csv
+04/28/2019 11:34:09 PM Downloading athena/dc2e11a1-64db-4847-9aa1-4fd515d80474.csv
+04/28/2019 11:37:59 PM Clearing bucket before beginning....
+04/28/2019 11:38:00 PM Found credentials in shared credentials file: ~/.aws/credentials
+04/28/2019 11:38:00 PM Using Serverless deployment potassium40
+04/28/2019 11:38:00 PM Using SQS Queue: p40-scan-queue
+04/28/2019 11:38:00 PM Putting 5 messages onto Que: https://ap-southeast-1.queue.amazonaws.com/820756113164/p40-scan-queue
+04/28/2019 11:38:00 PM Total Messages: 5
+04/28/2019 11:38:00 PM Successfully sent: 5
+04/28/2019 11:38:00 PM Failed to send: 0
+04/28/2019 11:38:00 PM Checking SQS Que....
+04/28/2019 11:38:10 PM 0 messages left on Que, 0 messages not visible
+04/28/2019 11:38:10 PM Creating Athena Database and Tables
+04/28/2019 11:38:11 PM Succeeded. Location: s3://p40.123456/athena/6f0a5aaa-a742-47c4-9aaa-153a69043ec6.txt
+04/28/2019 11:38:12 PM Succeeded. Location: s3://p40.123456/athena/a71aaf92-4eed-4d97-8e3b-adbde977c11c.txt
+04/28/2019 11:38:14 PM Succeeded in Querying bucket. Result Location: s3://p40.123456/athena/606b75bd-302a-4c6b-aa3c-6c62fe66006f.csv
+04/28/2019 11:38:14 PM Downloading athena/606b75bd-302a-4c6b-aa3c-6c62fe66006f.csv
