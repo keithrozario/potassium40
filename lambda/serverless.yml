@@ -4,14 +4,36 @@ service: potassium40
 custom:
   aws_region: ap-southeast-1
   bucketName: p40.123456
+  queueName: p40-scan-queue
 
 resources:
   Resources:
+
     p40Bucket:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.bucketName}
         AccessControl: Private
+    
+    scanQueue:
+      Type: AWS::SQS::Queue
+      DependsOn: deadLetterQueue
+      Properties:
+        QueueName: ${self:custom.queueName}
+        MessageRetentionPeriod: 1200
+        VisibilityTimeout: 240
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - deadLetterQueue
+              - Arn
+          maxReceiveCount: 5
+    
+    deadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.queueName}-dl
+        MessageRetentionPeriod: 1209600
 
 provider:
   name: aws
@@ -45,19 +67,56 @@ provider:
         - - "arn:aws:s3:::"
           - ${self:custom.bucketName}
           - "/*"
-  # Invoke lambda permissions (might be deprecated in future versions)
   - Effect: Allow
     Action:
-    - lambda:InvokeFunction
-    Resource: "*" # no choice for now, will see how to resolve circular dependency issue later
-  # filter log events permissions (might be deprecated in future versions)
-  - Effect: Allow
-    Action:
-    - logs:FilterLogEvents
-    Resource: "*" # no choice for now, will see how to resolve circular dependency issue later
-
+      - sqs:SendMessage
+      - sqs:GetQueueUrl
+    Resource:
+      Fn::GetAtt:
+        - scanQueue
+        - Arn
   environment:
     bucket_name: ${self:custom.bucketName}
+    scan_queue: 
+      Ref: scanQueue
+
+# layers:
+#   ciscoumbrella:
+#     package:
+#       artifact: layers/random_top-1m.csv.zip  # Cisco Umbrella top 1 million (randomized)
+#   majestic:
+#     package:
+#       artifact: layers/random_majestic_million.csv.zip  # Majestic 1 million (randomized)
+
+
+functions:
+  get_robots:
+    handler: get_robots.get_robots
+    memorySize: 1280
+    timeout: 120
+    description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
+    layers:
+      - arn:aws:lambda:ap-southeast-1:820756113164:layer:CiscoUmbrellaLamdaLayer:1
+      - arn:aws:lambda:ap-southeast-1:820756113164:layer:MajesticLambdaLayer:1
+      - arn:aws:lambda:${self:provider.region}:113088814899:layer:Klayers-python37-requests:3
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - scanQueue
+              - Arn
+          batchSize: 1
+    
+  # compress_bucket:
+  #   handler: compress_bucket.compress_bucket
+  #   memorySize: 3008
+  #   timeout: 600
+  #   description: Compress all files in S3 bucket into 1 single zip file
+  # clear_bucket:
+  #   handler: clear_bucket.clear_bucket
+  #   memorySize: 128
+  #   timeout: 600
+  #   description: Delete all items from bucket
 
 package:
   exclude:
@@ -67,48 +126,3 @@ package:
     - package.json
     - package-lock.json
     - layers/**
-
-layers:
-  ciscoumbrella:
-    package:
-      artifact: layers/random_top-1m.csv.zip  # Cisco Umbrella top 1 million (randomized)
-  majestic:
-    package:
-      artifact: layers/random_majestic_million.csv.zip  # Majestic 1 million (randomized)
-
-
-functions:
-  get_robots:
-    handler: get_robots.get_robots
-    memorySize: 1280
-    timeout: 100
-    description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
-    layers:
-      - {Ref: CiscoumbrellaLambdaLayer}  # uses CloudFormation reference format
-      - {Ref: MajesticLambdaLayer}  # uses CloudFormation reference format
-      - Fn::Join:
-        - ""
-        - - "arn:aws:lambda:"
-          - ${opt:region, self:provider.region}
-          - ":113088814899:layer:"
-          - "Klayers-python37-requests:1"  # layer_name:version
-  compress_bucket:
-    handler: compress_bucket.compress_bucket
-    memorySize: 3008
-    timeout: 600
-    description: Compress all files in S3 bucket into 1 single zip file
-  clear_bucket:
-    handler: clear_bucket.clear_bucket
-    memorySize: 128
-    timeout: 600
-    description: Delete all items from bucket
-  invoke_lambdas:
-    handler: invoke_lambdas.invoke_lambdas
-    memorySize: 128
-    timeout: 120
-    description: Invoke lambdas on behalf, faster invocations
-  check_lambda:
-    handler: check_lambda.check_lambda
-    memorySize: 128
-    timeout: 90
-    description: Check status of a lambda, how many started and ended
