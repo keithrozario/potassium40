@@ -25,4 +25,5 @@ lambda/status.json
 robots.json.gz
 lambda/node_modules/
 lambda/node_modules
-scan.log
+*.log
+*.csv

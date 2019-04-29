@@ -93,7 +93,7 @@ functions:
   get_robots:
     handler: get_robots.get_robots
     memorySize: 1280
-    timeout: 120
+    timeout: 150
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
     layers:
       - arn:aws:lambda:ap-southeast-1:820756113164:layer:CiscoUmbrellaLamdaLayer:1
@@ -106,6 +106,7 @@ functions:
               - scanQueue
               - Arn
           batchSize: 1
+    reservedConcurrency: 800
     
   # compress_bucket:
   #   handler: compress_bucket.compress_bucket
