@@ -1,34 +1,33 @@
-import boto3
+import os
 import gzip
 import logging
-import json
-import os
+import tempfile
+
+import boto3
 
 
-def compress_bucket(event, context):
+def main(event, context):
     """
-    compresses all files in an s3_bucket to a zip file
+    Converts a single file in event['filename'] to gzip compressed into the same bucket
     """
-
     logger = logging.getLogger()
-    level = logging.INFO
-    logger.setLevel(level)
+    logger.setLevel(logging.INFO)
 
-    bucket_name = os.environ['bucket_name']
     file_name = event['result_file']
-    file_dir = '/tmp/'  # directory in the
 
     s3 = boto3.resource('s3')
-    bucket = s3.Bucket(bucket_name)
+    bucket = s3.Bucket(os.environ['bucket_name'])
 
+    tmp = tempfile.SpooledTemporaryFile(mode='w+b')
+    logger.info('Downloading result file')
+    with tmp as fileobj:
+        bucket.download_fileobj(file_name, fileobj)
+        fileobj.seek(0)
+        with gzip.open(f'/tmp/{file_name}.gz', 'wb') as compressed_file:
+            compressed_file.write(fileobj.read())
 
-    # write everything to a single file
-    with gzip.open(file_dir + file_name, 'wb') as f:
-        f.write(json.dumps(full_list).encode('utf-8'))
+    s3.Bucket(os.environ['bucket_name']).upload_file(f'/tmp/{file_name}.gz', f'{file_name}.gz')
 
-    # Write IOString to zip file in temp directory
-    # Upload zip file back to bucket
-    s3.Bucket(bucket_name).upload_file(file_dir + file_name, file_name)
 
 if __name__ == '__main__':
-    compress_bucket({}, {})
+    main({'result_file': 'temp.txt'}, {})
