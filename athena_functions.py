@@ -5,8 +5,8 @@ import logging
 def check_execution_status(execution_id, client):
     """
     checks the execution status of a Athena Query
-    :param execution_id:
-    :return the first state of the query that is **NOT** RUNNING
+    loops until a result is available
+    returns result
     """
 
     state = 'RUNNING'
@@ -28,6 +28,7 @@ def create_athena_db(bucket_name, region):
     Database name hardcoded to p40
     Table name hardcoded to robots
     """
+
     logger = logging.getLogger('__main__')
     client = boto3.client('athena', region_name=region)
     workgroup = 'primary'
@@ -62,10 +63,12 @@ def create_athena_db(bucket_name, region):
 def query_robots(bucket_name, region):
     """
     Queries table and returns location where result file is available
+    database and table name hardcoded to p40
     """
-    query = 'select * from p40.robots'
-    client = boto3.client('athena', region_name=region)
+    query = 'select * from p40.robots ORDER BY domain'
     workgroup = 'primary'
+
+    client = boto3.client('athena', region_name=region)
     logger = logging.getLogger('__main__')
 
     response = client.start_query_execution(QueryString=query,

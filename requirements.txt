@@ -1,6 +1,6 @@
 astroid==2.2.5
-boto3==1.9.137
-botocore==1.12.137
+boto3==1.9.142
+botocore==1.12.142
 docutils==0.14
 isort==4.3.17
 jmespath==0.9.4

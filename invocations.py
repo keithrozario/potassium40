@@ -69,7 +69,10 @@ def check_lambdas(function_name, num_invocations, start_time, region_name=False,
 
 
 def clear_bucket():
-
+    """ 
+    Deletes all objects in Bucket
+    use it wisely
+    """
     config = get_config()
 
     bucket_name = config['custom']['bucketName']
@@ -229,13 +232,13 @@ def sync_in_region(function_name, payloads, region_name=False, max_workers=1, lo
             resp_payload = future.result()['Payload'].read().decode('utf-8')
 
             if log_type == 'None':
-                results.append(resp_payload)
+                results.append({'resp_payload': resp_payload[1:-1]})
             else:
                 log_result = base64.b64decode(future.result()['LogResult'])
-                results.append({'resp_payload': resp_payload,
+                results.append({'resp_payload': resp_payload[1:-1],
                                 'log_result': log_result})
 
-    return None
+    return results
 
 
 def check_queue(queue_name):
@@ -310,15 +313,20 @@ def put_sqs(message_batch, queue_name):
     logger.info(f"Failed to send: {num_messages_failed}")
 
     logger.info("Checking SQS Que....")
+
+    poll_count = 0
     while True:
         time.sleep(10)
+        poll_count += 1
         response = client.get_queue_attributes(QueueUrl=que_url,
                                                AttributeNames=['ApproximateNumberOfMessages',
                                                                'ApproximateNumberOfMessagesNotVisible'])
         num_messages_on_que = int(response['Attributes']['ApproximateNumberOfMessages'])
         num_messages_hidden = int(response['Attributes']['ApproximateNumberOfMessagesNotVisible'])
 
-        logger.info(f"{num_messages_on_que} messages left on Que, {num_messages_hidden} messages not visible")
+        if poll_count % 3 == 0:
+            logger.info(f"{num_messages_on_que} messages left on Que, {num_messages_hidden} messages not visible")
+
         if num_messages_on_que == 0 and num_messages_hidden == 0:
             break
 

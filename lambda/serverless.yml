@@ -5,6 +5,7 @@ custom:
   aws_region: ap-southeast-1
   bucketName: p40.123456
   queueName: p40-scan-queue
+  stage: functions
 
 resources:
   Resources:
@@ -27,7 +28,7 @@ resources:
             Fn::GetAtt:
               - deadLetterQueue
               - Arn
-          maxReceiveCount: 5
+          maxReceiveCount: 2
     
     deadLetterQueue:
       Type: AWS::SQS::Queue
@@ -39,7 +40,7 @@ provider:
   name: aws
   runtime: python3.7
   logRetentionDays: 1
-  stage: functions
+  stage: ${self:custom.stage}
   region: ${self:custom.aws_region}
   logRetentionInDays: 1  # don't need so many
   iamRoleStatements:
@@ -80,13 +81,10 @@ provider:
     scan_queue: 
       Ref: scanQueue
 
-# layers:
-#   ciscoumbrella:
-#     package:
-#       artifact: layers/random_top-1m.csv.zip  # Cisco Umbrella top 1 million (randomized)
-#   majestic:
-#     package:
-#       artifact: layers/random_majestic_million.csv.zip  # Majestic 1 million (randomized)
+layers:
+  majestic:
+    package:
+      artifact: layers/random_majestic_million.csv.zip  # Majestic 1 million (randomized)
 
 
 functions:
@@ -96,8 +94,7 @@ functions:
     timeout: 150
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
     layers:
-      - arn:aws:lambda:ap-southeast-1:820756113164:layer:CiscoUmbrellaLamdaLayer:1
-      - arn:aws:lambda:ap-southeast-1:820756113164:layer:MajesticLambdaLayer:1
+      - {Ref: MajesticLambdaLayer}
       - arn:aws:lambda:${self:provider.region}:113088814899:layer:Klayers-python37-requests:3
     events:
       - sqs:
@@ -107,17 +104,22 @@ functions:
               - Arn
           batchSize: 1
     reservedConcurrency: 800
-    
-  # compress_bucket:
-  #   handler: compress_bucket.compress_bucket
-  #   memorySize: 3008
-  #   timeout: 600
-  #   description: Compress all files in S3 bucket into 1 single zip file
-  # clear_bucket:
-  #   handler: clear_bucket.clear_bucket
-  #   memorySize: 128
-  #   timeout: 600
-  #   description: Delete all items from bucket
+  compress_object:
+    handler: compress_object.main
+    memorySize: 3008
+    timeout: 600
+    description: Compress specific object in s3 bucket using gzip
+  clear_bucket:
+    handler: clear_bucket.clear_bucket
+    memorySize: 128
+    timeout: 600
+    description: Delete all items from bucket
+  convert_to_json:
+    handler: convert_to_json.main
+    memorysize: 3008
+    timeout: 120
+    description: converts athena csv file into jsonl file
+
 
 package:
   exclude:

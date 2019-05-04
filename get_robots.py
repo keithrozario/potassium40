@@ -56,6 +56,7 @@ if __name__ == '__main__':
     region = config['custom']['aws_region']
     service_name = config['service']
     queue_name = config['custom']['queueName']
+    stage_name = config['custom']['stage']
     logger.info(f'Using Serverless deployment {service_name}')
     logger.info(f'Using SQS Queue: {queue_name}')
 
@@ -76,17 +77,20 @@ if __name__ == '__main__':
     print("Time Taken to process {:,} urls is {}s".format(total_urls,
                                                           time.time() - _start))
 
+    # Use Athena to query S3 Bucket
     athena_functions.create_athena_db(bucket_name, region)
     result_file = athena_functions.query_robots(bucket_name, region)
-
-    print("Time Taken to query {:,} urls is {}s".format(total_urls,
+    result_file_key = result_file.replace(f's3://{bucket_name}/', '')
+    print("Time Taken to query {:,} file is {}s".format(len(sqs_messages),
                                                         time.time() - _start))
 
+    # Compress result file
+    results = invocations.sync_in_region(function_name=f"{service_name}-{stage_name}-compress_object",
+                                         payloads=[{'result_file': result_file_key}])
+
+    result_key = results[0]['resp_payload'].replace(f's3://{bucket_name}/', '')
+    logger.info(f'Downloading {result_key}')
     s3 = boto3.resource('s3')
-    result_file_key = result_file.replace(f's3://{bucket_name}/', '')
-    logger.info(f'Downloading {result_file_key}')
-    s3.Bucket(bucket_name).download_file(result_file_key, result_file_key.split('/')[-1])
+    s3.meta.client.download_file(bucket_name, result_key, result_key)
 
     print("Time Taken to download file is {}s".format(time.time() - _start))
-
-
