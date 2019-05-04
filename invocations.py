@@ -324,11 +324,11 @@ def put_sqs(message_batch, queue_name):
         num_messages_on_que = int(response['Attributes']['ApproximateNumberOfMessages'])
         num_messages_hidden = int(response['Attributes']['ApproximateNumberOfMessagesNotVisible'])
 
-        if poll_count % 4 == 0:
-            logger.info(f"{num_messages_on_que} messages left on Que, {num_messages_hidden} messages not visible")
-
         if num_messages_on_que == 0 and num_messages_hidden == 0:
             logger.info(f"{num_messages_on_que} messages left on Que, {num_messages_hidden} messages not visible")
             break
+
+        if poll_count % 4 == 0:
+            logger.info(f"{num_messages_on_que} messages left on Que, {num_messages_hidden} messages not visible")
 
     return num_messages_success
