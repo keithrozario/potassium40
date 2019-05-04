@@ -16,9 +16,21 @@ var/
 .installed.cfg
 *.egg
 venv/*
+venv
+__pycache__/*
+__pycache__
+.idea
+.idea/*
 
 
 # Serverless directories
 lambda/.serverless/
 lambda/status.json
 robots.json.gz
+lambda/node_modules/
+lambda/node_modules
+*.log
+*.csv
+
+# others
+.vscode
