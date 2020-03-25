@@ -2,8 +2,8 @@
 service: potassium40
 
 custom:
-  aws_region: ap-southeast-1
-  bucketName: p40.123456
+  aws_region: us-east-1
+  bucketName: p40.${sls:instanceId}
   queueName: p40-scan-queue
   stage: functions
 
@@ -111,14 +111,9 @@ functions:
     description: Compress specific object in s3 bucket using gzip
   clear_bucket:
     handler: clear_bucket.clear_bucket
-    memorySize: 128
+    memorySize: 256
     timeout: 600
     description: Delete all items from bucket
-  convert_to_json:
-    handler: convert_to_json.main
-    memorysize: 3008
-    timeout: 120
-    description: converts athena csv file into jsonl file
 
 
 package:
