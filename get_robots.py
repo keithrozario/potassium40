@@ -11,7 +11,6 @@ import boto3
 import invocations
 import athena_functions
 
-
 if __name__ == '__main__':
 
     # Logging setup
@@ -29,13 +28,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--num_invocations",
                         help="Number of lambdas to invoke, default is 100",
-                        default=5)
+                        default=20)
     parser.add_argument("-p", "--per_lambda",
                         help="Number of records to process per lambda, default is 1250",
-                        default=10)
+                        default=2)
     parser.add_argument("-m", "--multiproc_count",
                         help="Number of multi-processes per lambda, default is 125",
-                        default=5)
+                        default=2)
 
     args = parser.parse_args()
 
@@ -52,36 +51,37 @@ if __name__ == '__main__':
 
     # Get Configuration
     config = invocations.get_config()
-    bucket_name = config['custom']['bucketName']
+    bucket_name = invocations.get_bucket_name()
     region = config['custom']['aws_region']
     service_name = config['service']
-    queue_name = config['custom']['queueName']
+    queue_names = config['queue_names']
+    dl_queue = config['custom']['dlQueueName']
     stage_name = config['custom']['stage']
     logger.info(f'Using Serverless deployment {service_name}')
-    logger.info(f'Using SQS Queue: {queue_name}')
+    logger.info(f'Using SQS Queues: {queue_names}')
 
     # Create Payloads
     for x in range(int(num_invocations)):
         payloads.append({'start_pos': x * per_lambda,
                          'end_pos': (x+1) * per_lambda,
                          'proc_count': proc_count})  # proc_count is the number of processes per lambda
-    
+
     # Package Payloads into SQS Messages
-    sqs_messages = [{'MessageBody': json.dumps(payload), 
+    sqs_messages = [{'MessageBody': json.dumps(payload),
                      'Id': uuid.uuid4().__str__()} for payload in payloads]
 
     _start = time.time()
-    invocations.put_sqs(sqs_messages, queue_name)
-
+    invocations.put_sqs(sqs_messages, queue_names)
+    invocations.check_dead_letter(dl_queue)
     _end = time.time()
-    print("Time Taken to process {:,} urls is {}s".format(total_urls,
+    print("\nTime Taken to process {:,} urls is {}s\n".format(total_urls,
                                                           time.time() - _start))
 
     # Use Athena to query S3 Bucket
     athena_functions.create_athena_db(bucket_name, region)
     result_file = athena_functions.query_robots(bucket_name, region)
     result_file_key = result_file.replace(f's3://{bucket_name}/', '')
-    print("Time Taken to query {:,} file is {}s".format(len(sqs_messages),
+    print("\nTime Taken to query {:,} file is {}s\n".format(len(sqs_messages),
                                                         time.time() - _start))
 
     # Compress result file
@@ -93,4 +93,4 @@ if __name__ == '__main__':
     s3 = boto3.resource('s3')
     s3.meta.client.download_file(bucket_name, result_key, result_key)
 
-    print("Time Taken to download file is {}s".format(time.time() - _start))
+    print("\nTime Taken to for entire operation: {}s\n".format(time.time() - _start))

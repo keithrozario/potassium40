@@ -3,9 +3,16 @@ service: potassium40
 
 custom:
   aws_region: us-east-1
-  bucketName: p40.${sls:instanceId}
-  queueName: p40-scan-queue
+  bucketName: p40.${sls:instanceId} # random id
+  queueName0: p40-scan-queue0
+  queueName1: p40-scan-queue1
+  queueName2: p40-scan-queue2
+  queueName3: p40-scan-queue3
+  dlQueueName: p40-scan-dl
   stage: functions
+  retry: 1 # set to one for no retry (fastest)
+  visibilityTimeout: 90
+  functionTimeout: 60
 
 resources:
   Resources:
@@ -16,24 +23,66 @@ resources:
         BucketName: ${self:custom.bucketName}
         AccessControl: Private
     
-    scanQueue:
+    scanQueue0:
       Type: AWS::SQS::Queue
       DependsOn: deadLetterQueue
       Properties:
-        QueueName: ${self:custom.queueName}
+        QueueName: ${self:custom.queueName0}
         MessageRetentionPeriod: 1200
-        VisibilityTimeout: 240
+        VisibilityTimeout: ${self:custom.visibilityTimeout}
         RedrivePolicy:
           deadLetterTargetArn:
             Fn::GetAtt:
               - deadLetterQueue
               - Arn
-          maxReceiveCount: 2
+          maxReceiveCount: ${self:custom.retry}
+
+    scanQueue1:
+      Type: AWS::SQS::Queue
+      DependsOn: deadLetterQueue
+      Properties:
+        QueueName: ${self:custom.queueName1}
+        MessageRetentionPeriod: 1200
+        VisibilityTimeout: ${self:custom.visibilityTimeout}
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - deadLetterQueue
+              - Arn
+          maxReceiveCount: ${self:custom.retry}
+
+    scanQueue2:
+      Type: AWS::SQS::Queue
+      DependsOn: deadLetterQueue
+      Properties:
+        QueueName: ${self:custom.queueName2}
+        MessageRetentionPeriod: 1200
+        VisibilityTimeout: ${self:custom.visibilityTimeout}
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - deadLetterQueue
+              - Arn
+          maxReceiveCount: ${self:custom.retry}
+
+    scanQueue3:
+      Type: AWS::SQS::Queue
+      DependsOn: deadLetterQueue
+      Properties:
+        QueueName: ${self:custom.queueName3}
+        MessageRetentionPeriod: 1200
+        VisibilityTimeout: ${self:custom.visibilityTimeout}
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - deadLetterQueue
+              - Arn
+          maxReceiveCount: ${self:custom.retry}
     
     deadLetterQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ${self:custom.queueName}-dl
+        QueueName: ${self:custom.dlQueueName}
         MessageRetentionPeriod: 1209600
 
 provider:
@@ -73,25 +122,40 @@ provider:
       - sqs:SendMessage
       - sqs:GetQueueUrl
     Resource:
-      Fn::GetAtt:
-        - scanQueue
-        - Arn
+      - Fn::GetAtt:
+          - scanQueue0
+          - Arn
+      - Fn::GetAtt:
+          - scanQueue1
+          - Arn
+      - Fn::GetAtt:
+          - scanQueue2
+          - Arn
+      - Fn::GetAtt:
+          - scanQueue3
+          - Arn
   environment:
     bucket_name: ${self:custom.bucketName}
-    scan_queue: 
-      Ref: scanQueue
+    scan_queue0:
+      Ref: scanQueue0
+    scan_queue1:
+      Ref: scanQueue1
+    scan_queue2:
+      Ref: scanQueue2
+    scan_queue3:
+      Ref: scanQueue3
 
 layers:
   majestic:
     package:
-      artifact: layers/random_majestic_million.csv.zip  # Majestic 1 million (randomized)
+      artifact: layers/majestic_million.csv.zip  # Majestic 1 million
 
 
 functions:
   get_robots:
     handler: get_robots.get_robots
-    memorySize: 1280
-    timeout: 150
+    memorySize: 1792
+    timeout: ${self:custom.functionTimeout}
     description: Use Lambda functions to get robots.txt file from Cisco Umbrella 1 million
     layers:
       - {Ref: MajesticLambdaLayer}
@@ -100,13 +164,31 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt:
-              - scanQueue
+              - scanQueue0
+              - Arn
+          batchSize: 1
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - scanQueue1
+              - Arn
+          batchSize: 1
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - scanQueue2
+              - Arn
+          batchSize: 1
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - scanQueue3
               - Arn
           batchSize: 1
     reservedConcurrency: 800
   compress_object:
     handler: compress_object.main
-    memorySize: 3008
+    memorySize: 1792
     timeout: 600
     description: Compress specific object in s3 bucket using gzip
   clear_bucket:

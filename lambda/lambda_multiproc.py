@@ -84,6 +84,8 @@ def init_requests(event):
                                                                         rows[0],
                                                                         rows[-1],
                                                                         proc_count))
-    results = multiproc_requests(rows, proc_count, event['function'])
-
+    try:
+        results = multiproc_requests(rows, proc_count, event['function'])
+    except EOFError:
+        return {}
     return results

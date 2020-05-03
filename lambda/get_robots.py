@@ -3,6 +3,7 @@ import io
 import json
 import os
 import boto3
+import urllib3
 import requests
 import lambda_multiproc
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -29,22 +30,29 @@ def request(rows, conn):
 
     for row in rows:
         # get domain name from row of majestic top 1 million
-        url = '{}'.format(row.split(',')[2].strip())
+        url = 'http://{}/robots.txt'.format(row.split(',')[2].strip())
 
         try:
-            response = s.get("http://{}/robots.txt".format(url),
+            response = s.get(url,
                              verify=False,
                              timeout=1.5)
-
             if response.status_code == 200 and response.url[-10:] == 'robots.txt':
                 if 'user-agent:' in response.text.lower():
-                    responses.append({'domain': url,
-                                      'robots.txt': response.text})
+                    if len(response.content) < 1024 * 1024:
+                        try:
+                            responses.append({'domain': url,
+                                              'robots.txt': response.content.decode('utf-8')})
+                        except UnicodeDecodeError:
+                            logger.error(f"Robots.txt for {url} is not properly encoded")
+                    else:
+                        logger.error(f"Robots.txt for {url} is larger than 1 MB")
 
         except requests.exceptions.RequestException:
-            pass
+            logger.error(f"Request Exception for {url}")
         except UnicodeError:  # sometimes occur with websites
             pass
+        except urllib3.exceptions.HeaderParsingError:
+            logger.error(f"Failed Header parsing for {url}")
 
     conn.send(responses)
     conn.close()
@@ -60,11 +68,12 @@ def get_robots(event, context):
 
     try:
         message = json.loads(event['Records'][0]['body'])
+        logger.info(message)
     except (json.JSONDecodeError, KeyError):
-        logger.info("JSON Decoder error for event: {}".format(event))
+        logger.error("JSON Decoder error for event: {}".format(event))
         return {'status': 500}
 
-    message['file_name'] = 'random_majestic_million.csv'
+    message['file_name'] = 'majestic_million.csv'
     message['function'] = request  # pass the function
 
     results = lambda_multiproc.init_requests(message)

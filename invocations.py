@@ -6,7 +6,6 @@ import time
 import concurrent.futures
 import base64
 import logging
-from botocore.exceptions import ClientError
 
 configuration_file = 'lambda/serverless.yml'
 status_file = 'lambda/status.json'
@@ -15,10 +14,34 @@ result_folder = 'result'
 
 def get_config():
 
-    with open('lambda/serverless.yml', 'r') as sls_config:
+    with open(configuration_file, 'r') as sls_config:
         config = yaml.load(sls_config.read(), Loader=yaml.Loader)
 
+    # modify Queue Names
+    config['queue_names'] = [config['custom'][name] for name in config['custom'].keys() if name.startswith('queue')]
+
     return config
+
+
+def get_bucket_name():
+    """
+    Gets random bucket name from CloudFormation stack
+    :return: bucket_name
+    """
+
+    config = get_config()
+    region = config['custom']['aws_region']
+    client = boto3.client('cloudformation', region_name=region)
+
+    stack_name = f"{config['service']}-{config['custom']['stage']}"
+
+    response = client.describe_stack_resources(StackName=stack_name)
+
+    bucket_name = [resource['PhysicalResourceId']
+                   for resource in response['StackResources']
+                   if resource['LogicalResourceId'] == 'p40Bucket'][0]
+
+    return bucket_name
 
 
 def set_concurrency(num_payloads, lambda_client, function_name):
@@ -41,33 +64,6 @@ def calc_concurrency(num_payloads):
         return num_payloads
 
 
-def check_lambdas(function_name, num_invocations, start_time, region_name=False, sleep_time=3):
-
-    print("Checking Lambdas in {}".format(region_name))
-    num_lambdas_ended = 0
-
-    # if no region specified use region
-    if not region_name:
-        config = get_config()
-        region_name = config['custom']['aws_region']
-
-    client = boto3.client('lambda', region_name=region_name)
-
-    while True:
-        time.sleep(sleep_time)
-        if num_lambdas_ended >= num_invocations:
-            print('All lambdas ended!')
-            break
-        else:
-            num_lambdas_ended = get_log_events(client=client,
-                                               function_name=function_name,
-                                               start_time=start_time)
-        # Print Results
-        print("{} Lambdas Invoked, {} Lambdas completed".format(num_invocations,
-                                                                num_lambdas_ended))
-    return True
-
-
 def clear_bucket():
     """ 
     Deletes all objects in Bucket
@@ -75,8 +71,8 @@ def clear_bucket():
     """
     config = get_config()
 
-    bucket_name = config['custom']['bucketName']
     region = config['custom']['aws_region']
+    bucket_name = get_bucket_name()
 
     s3_client = boto3.client('s3', region_name=region)
 
@@ -113,8 +109,8 @@ def download_bucket():
     :return:
     """
 
+    bucket_name = get_bucket_name()
     config = get_config()
-    bucket_name = config['custom']['bucketName']
     region = config['custom']['aws_region']
 
     s3_client = boto3.client('s3', region_name=region)
@@ -197,7 +193,7 @@ def check_dead_letter(queue_name):
         queue_name : queue_name of the dead letter queue
     """
 
-    region = get_config()['provider']['region']
+    region = get_config()['custom']['aws_region']
     client = boto3.client('sqs', region_name=region)
     logger = logging.getLogger('__main__')
 
@@ -214,48 +210,91 @@ def check_dead_letter(queue_name):
     return num_dead_letters
 
 
-def put_sqs(message_batch, queue_name):
+def put_sqs(message_batch, queue_names):
     """
     Args:
         message_batch : list of messages to be sent to the que
-        queue_name : name of que to be put on
+        queue_names (list) : names of ques to be put on
     """
 
     region = get_config()['custom']['aws_region']
     client = boto3.client('sqs', region_name=region)
     logger = logging.getLogger('__main__')
+    que_urls = get_queue_url(queue_names)
 
-    max_batch_size = 10
-    num_messages_success = 0
-    num_messages_failed = 0
-    que_url = client.get_queue_url(QueueName=f"{queue_name}")['QueueUrl']
-    logger.info(f"Putting {len(message_batch)} messages onto Que: {que_url}")
-    for k in range(0, len(message_batch), max_batch_size):
-        response = client.send_message_batch(QueueUrl=que_url,
-                                             Entries=message_batch[k:k + max_batch_size])
-        num_messages_success += len(response.get('Successful', []))
-        num_messages_failed += len(response.get('Failed', []))
-    logger.info(f"Total Messages: {len(message_batch)}")
-    logger.info(f"Successfully sent: {num_messages_success}")
-    logger.info(f"Failed to send: {num_messages_failed}")
+    logger.info(f"Putting {len(message_batch)} messages onto Ques")
+    num_messages_success = split_and_put_into_ques(message_batch=message_batch, que_urls=que_urls, client=client)
 
     logger.info("Checking SQS Que....")
 
     poll_count = 0
     while True:
-        time.sleep(10)
+
         poll_count += 1
-        response = client.get_queue_attributes(QueueUrl=que_url,
-                                               AttributeNames=['ApproximateNumberOfMessages',
-                                                               'ApproximateNumberOfMessagesNotVisible'])
-        num_messages_on_que = int(response['Attributes']['ApproximateNumberOfMessages'])
-        num_messages_hidden = int(response['Attributes']['ApproximateNumberOfMessagesNotVisible'])
+        num_messages_on_que = 0
+        num_messages_hidden = 0
+
+        for que_url in que_urls:
+            response = client.get_queue_attributes(QueueUrl=que_url,
+                                                   AttributeNames=['ApproximateNumberOfMessages',
+                                                                   'ApproximateNumberOfMessagesNotVisible'])
+            num_messages_on_que += int(response['Attributes']['ApproximateNumberOfMessages'])
+            num_messages_hidden += int(response['Attributes']['ApproximateNumberOfMessagesNotVisible'])
 
         if num_messages_on_que == 0 and num_messages_hidden == 0:
             logger.info(f"{num_messages_on_que} messages left on Que, {num_messages_hidden} messages not visible")
             break
 
-        if poll_count % 4 == 0:
+        if poll_count % 2 == 0:
             logger.info(f"{num_messages_on_que} messages left on Que, {num_messages_hidden} messages not visible")
+
+        time.sleep(2)
+
+    return num_messages_success
+
+
+def get_queue_url(queue_names: list):
+    region = get_config()['custom']['aws_region']
+    client = boto3.client('sqs', region_name=region)
+    urls = []
+
+    for name in queue_names:
+        que_url = client.get_queue_url(QueueName=f"{name}")['QueueUrl']
+        urls.append(que_url)
+
+    return urls
+
+
+def split_and_put_into_ques(message_batch, que_urls, client, max_batch_size=10):
+    """
+    Args:
+        message_batch: List of all messages to be put onto the que
+        que_urls: List of que_urls for messages to be put onto
+        max_batch_size: Maximum batch size (default to 10 for sqs)
+        client: boto3 sqs client
+    :return
+        num_messages_success: Number of successful messages
+    """
+
+    num_messages_success = 0
+    num_messages_failed = 0
+    logger = logging.getLogger('__main__')
+
+    # Split message batch into equal chunk sizes for each SQS Que
+    chunks = [message_batch[i::len(que_urls)] for i in range(len(que_urls))]
+    messages_per_que = zip(chunks, que_urls)
+
+    # For each que and chunk, put onto SQS
+    for chunk, que_url in messages_per_que:
+
+        for k in range(0, len(chunk), max_batch_size):
+            response = client.send_message_batch(QueueUrl=que_url,
+                                                 Entries=chunk[k:k + max_batch_size])
+            num_messages_success += len(response.get('Successful', []))
+            num_messages_failed += len(response.get('Failed', []))
+        logger.info(f"Total Successful Messages: {len(chunk)} successful for {que_url}")
+
+    logger.info(f"Total Successful messages for all ques: {num_messages_success}")
+    logger.info(f"Total failed messages for all ques: {num_messages_failed}")
 
     return num_messages_success

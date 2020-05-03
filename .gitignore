@@ -37,3 +37,5 @@ lambda/node_modules
 # others
 .vscode
 .DS_Store
+scan.log
+robots_*
