@@ -71,7 +71,7 @@ I intend to write in more detail about the architecture, but for now here's a qu
 
 # Results
 
-If you just want the robots.txt files, [here's the latest scan I did](https://www.dropbox.com/s/s6httizbbkacrgg/robots_2019-05-04.csv.gz?dl=0)
+If you just want the robots.txt files, [here's](https://1drv.ms/u/s!ApLpKZmARePq-AZvtgueHWLusmGZ) a scan I did on 03-May-2020.
 
 # To do
 
