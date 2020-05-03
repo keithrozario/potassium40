@@ -1,0 +1,25 @@
+{
+  "name": "potassium40",
+  "version": "0.0.1",
+  "description": "Potassium 40 Serverless Deployment",
+  "main": "index.js",
+  "scripts": {
+    "test": "sls deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keithrozario/potassium40.git"
+  },
+  "keywords": [
+    "potassium40"
+  ],
+  "author": "Keith Rozario",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/keithrozario/potassium40/issues"
+  },
+  "homepage": "https://github.com/keithrozario/potassium40#readme",
+  "dependencies": {
+    "serverless": "^1.69.0"
+  }
+}

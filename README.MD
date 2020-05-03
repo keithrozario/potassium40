@@ -61,13 +61,13 @@ NOTE: an s3 bucket is created on install with the name p40.<uuid> , please delet
 
 This tool is still in beta mode. Use at your peril. But look at these results:
 
-![Screenshot](screenshots/prompt_results.png)
+![Screenshot](screenshots/prompt_results_new.png)
 
 # Architecture
 
 I intend to write in more detail about the architecture, but for now here's a quick n' dirty diagram
 
-![Screenshot](screenshots/architecture.png)
+![Screenshot](screenshots/architecture_new.png)
 
 # Results
 
