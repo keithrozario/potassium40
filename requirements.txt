@@ -1,5 +1,5 @@
 astroid==2.4.0
-boto3==1.13.0
+boto3==1.14.45
 botocore==1.16.0
 docutils==0.15.2
 isort==4.3.21
