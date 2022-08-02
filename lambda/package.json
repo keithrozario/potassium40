@@ -20,6 +20,6 @@
   },
   "homepage": "https://github.com/keithrozario/potassium40#readme",
   "dependencies": {
-    "serverless": "^1.69.0"
+    "serverless": "^1.83.3"
   }
 }
